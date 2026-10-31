@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+coverage/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Local database
+backend/data/
+data/
+*.db
+*.db-wal
+*.db-shm
+
+# Runtime image uploads
+backend/uploads/
+
+# Logs and tooling
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

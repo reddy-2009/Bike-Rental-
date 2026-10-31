@@ -1,0 +1,26 @@
+{
+  "name": "fresca-bike-rentals",
+  "version": "1.0.0",
+  "private": true,
+  "description": "fRESCA Bike Rentals \u2014 Your Ride. Your Freedom.",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "concurrently -n api,web -c yellow,cyan \"npm run dev -w backend\" \"npm run dev -w frontend\"",
+    "build": "npm run build -w backend && npm run build -w frontend",
+    "start": "npm run start -w backend",
+    "seed": "npm run seed -w backend",
+    "typecheck": "npm run typecheck -w backend && npm run typecheck -w frontend",
+    "test": "npm run test -w backend",
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "@playwright/test": "^1.49.0"
+  },
+  "engines": {
+    "node": ">=22.5.0"
+  }
+}
