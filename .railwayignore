@@ -1,0 +1,34 @@
+# Keep the upload small. The Docker build installs its own dependencies.
+node_modules
+**/node_modules
+backend/dist
+frontend/dist
+backend/src/generated
+
+# Never upload secrets or local data.
+.env
+.env.*
+!.env.example
+backend/data
+data
+*.db
+*.db-wal
+*.db-shm
+backend/uploads
+uploads
+
+# Not needed in the image
+.git
+.agents
+# Inactive Infrastructure as Code draft; the service still reads railway.json.
+.railway
+.vscode
+.idea
+*.log
+playwright-report
+test-results
+e2e
+tiger-login
+fresca-landing.html
+TEST_REPORT.md
+docs

@@ -1,0 +1,40 @@
+# Keep the build context small and never bake secrets into an image.
+
+node_modules
+**/node_modules
+
+# Build output is produced inside the image.
+backend/dist
+frontend/dist
+backend/src/generated
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Runtime data must come from the mounted volume, not the image.
+backend/data
+data
+*.db
+*.db-wal
+*.db-shm
+backend/uploads
+uploads
+
+# Version control, tooling and docs not needed at runtime
+.git
+.github
+.agents
+.vscode
+.idea
+node_modules/.cache
+*.log
+playwright-report
+test-results
+e2e
+tiger-login
+fresca-landing.html
+TEST_REPORT.md

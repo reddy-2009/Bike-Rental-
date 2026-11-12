@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+coverage/
+
+# Generated Prisma Client
+backend/generated/
+backend/src/generated/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Local database
+backend/data/
+data/
+*.db
+*.db-wal
+*.db-shm
+
+# Runtime image uploads
+backend/uploads/
+
+# Logs and tooling
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Supabase CLI local state
+supabase/.temp/
+
+# Supabase Edge Function secrets (local only, never commit)
+supabase/functions/.env
+supabase/functions/.env.*
+!supabase/functions/.env.example
+supabase/.env

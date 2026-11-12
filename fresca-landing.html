@@ -1,0 +1,3158 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#FFD400" />
+    <meta
+      name="description"
+      content="FRESCA Bike Rental. Pick a bike. Ride the city. Return anywhere. City, mountain and electric bikes in Kadapa and Proddatur."
+    />
+    <title>FRESCA Bike Rental — Pick a bike. Ride the city.</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23FFD400'/%3E%3Cpath d='M7 6h19v5H13v4h10v5H13v6H7z' fill='%23111'/%3E%3C/svg%3E"
+    />
+
+    <!-- Only external assets: pinned Three.js (cdnjs) + Google Fonts. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      /* ==================================================================
+         FRESCA — brutalist yellow landing page
+         Palette: #FFD400 yellow, #111 ink, #FAFAF5 paper. Nothing else.
+         ================================================================== */
+
+      :root {
+        --yellow: #ffd400;
+        --yellow-deep: #e6bf00;
+        --ink: #111111;
+        --paper: #fafaf5;
+        --bar: 64px;
+        --line: 3px solid var(--ink);
+        --display: 'Bebas Neue', 'Arial Narrow', Impact, sans-serif;
+        --mono: 'Space Mono', ui-monospace, 'Courier New', monospace;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+        -webkit-text-size-adjust: 100%;
+      }
+
+      body {
+        margin: 0;
+        background: var(--yellow);
+        color: var(--ink);
+        font-family: var(--mono);
+        font-size: 15px;
+        line-height: 1.55;
+        overflow-x: hidden;
+      }
+
+      body.is-loading {
+        overflow: hidden;
+      }
+
+      img,
+      canvas {
+        display: block;
+        max-width: 100%;
+      }
+
+      a {
+        color: inherit;
+      }
+
+      button,
+      input,
+      select {
+        font: inherit;
+        color: inherit;
+      }
+
+      ::selection {
+        background: var(--ink);
+        color: var(--yellow);
+      }
+
+      :focus-visible {
+        outline: 3px solid var(--ink);
+        outline-offset: 3px;
+      }
+
+      .on-dark :focus-visible,
+      .footer :focus-visible,
+      .stage :focus-visible {
+        outline-color: var(--yellow);
+      }
+
+      .sr-only {
+        position: absolute !important;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+        border: 0;
+      }
+
+      .skip {
+        position: fixed;
+        top: 8px;
+        left: 8px;
+        z-index: 200;
+        padding: 10px 14px;
+        background: var(--ink);
+        color: var(--yellow);
+        font-size: 0.7rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        text-decoration: none;
+        transform: translateY(-160%);
+      }
+
+      .skip:focus {
+        transform: translateY(0);
+      }
+
+      /* ---------------------------------------------------------------- */
+      /* Loader                                                           */
+      /* ---------------------------------------------------------------- */
+
+      .loader {
+        position: fixed;
+        inset: 0;
+        z-index: 500;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: var(--ink);
+        color: var(--yellow);
+        transition: opacity 420ms ease, visibility 420ms ease;
+      }
+
+      .loader[data-done='true'] {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+
+      .loader__inner {
+        width: min(420px, 100%);
+      }
+
+      .loader__brand {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 16px;
+        font-family: var(--display);
+        font-size: clamp(3.4rem, 14vw, 6rem);
+        line-height: 0.85;
+        letter-spacing: 0.01em;
+      }
+
+      .loader__brand small {
+        font-family: var(--mono);
+        font-size: 0.6rem;
+        letter-spacing: 0.2em;
+        line-height: 1.5;
+        text-transform: uppercase;
+        color: var(--yellow);
+        opacity: 0.75;
+      }
+
+      .loader__track {
+        margin-top: 22px;
+        height: 14px;
+        border: 3px solid var(--yellow);
+        padding: 2px;
+      }
+
+      .loader__bar {
+        display: block;
+        height: 100%;
+        width: 0%;
+        background: var(--yellow);
+        transform-origin: left center;
+      }
+
+      .loader__meta {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 10px;
+        font-size: 0.64rem;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+
+      .loader__note {
+        margin: 26px 0 0;
+        max-width: 34ch;
+        font-size: 0.68rem;
+        line-height: 1.6;
+        color: var(--paper);
+        opacity: 0.7;
+      }
+
+      /* ---------------------------------------------------------------- */
+      /* Top bar                                                          */
+      /* ---------------------------------------------------------------- */
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 60;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        height: var(--bar);
+        padding: 0 16px;
+        background: var(--yellow);
+        border-bottom: var(--line);
+      }
+
+      .brand {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        color: var(--ink);
+        text-decoration: none;
+        line-height: 1;
+      }
+
+      .brand::before {
+        content: '';
+        width: 12px;
+        height: 12px;
+        background: var(--ink);
+        transform: translateY(-1px);
+      }
+
+      .brand strong {
+        font-family: var(--display);
+        font-size: 1.85rem;
+        font-weight: 400;
+        letter-spacing: 0.045em;
+      }
+
+      .brand span {
+        font-size: 0.5rem;
+        font-weight: 700;
+        letter-spacing: 0.17em;
+        text-transform: uppercase;
+      }
+
+      .topbar__nav {
+        display: none;
+        align-items: center;
+        gap: 20px;
+      }
+
+      .topbar__nav a {
+        font-size: 0.6rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        text-decoration: none;
+        padding: 6px 0;
+        border-bottom: 2px solid transparent;
+      }
+
+      .topbar__nav a:hover {
+        border-bottom-color: var(--ink);
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        border: 3px solid var(--ink);
+        background: var(--ink);
+        color: var(--yellow);
+        font-family: var(--mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        text-decoration: none;
+        padding: 11px 16px;
+        cursor: pointer;
+        transition: background 140ms ease, color 140ms ease, transform 140ms ease,
+          box-shadow 140ms ease;
+      }
+
+      .btn:hover {
+        background: var(--paper);
+        color: var(--ink);
+      }
+
+      .btn:active {
+        transform: translate(2px, 2px);
+      }
+
+      .btn--small {
+        padding: 9px 13px;
+        font-size: 0.6rem;
+      }
+
+      .btn--ghost {
+        background: transparent;
+        color: var(--ink);
+      }
+
+      .btn--ghost:hover {
+        background: var(--ink);
+        color: var(--yellow);
+      }
+
+      .btn[disabled] {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+
+      /* ---------------------------------------------------------------- */
+      /* Shell + 3D stage                                                 */
+      /* ---------------------------------------------------------------- */
+
+      .shell {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .stage {
+        position: sticky;
+        top: var(--bar);
+        z-index: 30;
+        height: 32svh;
+        min-height: 220px;
+        overflow: hidden;
+        background: var(--yellow);
+        border-bottom: var(--line);
+        isolation: isolate;
+        touch-action: pan-y;
+      }
+
+      .stage__ghost {
+        position: absolute;
+        left: 50%;
+        top: 46%;
+        z-index: 0;
+        transform: translate(-50%, -50%);
+        font-family: var(--display);
+        font-size: clamp(9rem, 34vw, 20rem);
+        line-height: 0.8;
+        letter-spacing: 0.02em;
+        color: transparent;
+        -webkit-text-stroke: 2px rgba(17, 17, 17, 0.16);
+        pointer-events: none;
+        user-select: none;
+      }
+
+      @supports not (-webkit-text-stroke: 1px #000) {
+        .stage__ghost {
+          color: rgba(17, 17, 17, 0.07);
+          -webkit-text-stroke: 0;
+        }
+      }
+
+      .stage__canvas {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        width: 100%;
+        height: 100%;
+        cursor: grab;
+      }
+
+      .stage__canvas:active {
+        cursor: grabbing;
+      }
+
+      .stage--failed .stage__canvas {
+        display: none;
+      }
+
+      .stage__error {
+        position: absolute;
+        inset: 0;
+        z-index: 3;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: var(--yellow);
+      }
+
+      .stage__error[hidden] {
+        display: none;
+      }
+
+      .stage__error-card {
+        max-width: 34ch;
+        padding: 16px;
+        background: var(--paper);
+        border: 3px solid var(--ink);
+        box-shadow: 7px 7px 0 var(--ink);
+      }
+
+      .stage__error-card strong {
+        display: block;
+        font-family: var(--display);
+        font-size: 1.9rem;
+        font-weight: 400;
+        letter-spacing: 0.02em;
+      }
+
+      .stage__error-card p {
+        margin: 6px 0 0;
+        font-size: 0.7rem;
+        line-height: 1.55;
+      }
+
+      .stage__hud {
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        pointer-events: none;
+      }
+
+      .stage__badge {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 5px 8px;
+        background: var(--ink);
+        color: var(--yellow);
+        font-size: 0.54rem;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+
+      .stage__badge i {
+        width: 6px;
+        height: 6px;
+        background: var(--yellow);
+        border-radius: 50%;
+        animation: pulse 1.6s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        50% {
+          opacity: 0.25;
+        }
+      }
+
+      .stage__speed {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        padding: 5px 8px;
+        border: 2px solid var(--ink);
+        background: var(--yellow);
+        font-size: 0.56rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .stage__bike {
+        position: absolute;
+        left: 12px;
+        bottom: 12px;
+        display: flex;
+        align-items: stretch;
+        border: 3px solid var(--ink);
+        background: var(--paper);
+        box-shadow: 5px 5px 0 var(--ink);
+      }
+
+      .stage__bike span {
+        display: grid;
+        place-items: center;
+        padding: 6px 8px;
+        font-size: 0.56rem;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+      }
+
+      .stage__bike span:first-child {
+        background: var(--ink);
+        color: var(--yellow);
+      }
+
+      .stage__bike strong {
+        display: grid;
+        place-items: center;
+        padding: 4px 12px;
+        font-family: var(--display);
+        font-size: 1.45rem;
+        font-weight: 400;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .stage__hint {
+        position: absolute;
+        right: 12px;
+        bottom: 12px;
+        max-width: 46%;
+        padding: 4px 7px;
+        border: 2px solid var(--ink);
+        background: var(--paper);
+        font-size: 0.5rem;
+        font-weight: 700;
+        line-height: 1.25;
+        letter-spacing: 0.12em;
+        text-align: right;
+        text-transform: uppercase;
+        pointer-events: none;
+      }
+
+      /* ---------------------------------------------------------------- */
+      /* Content                                                          */
+      /* ---------------------------------------------------------------- */
+
+      .content {
+        position: relative;
+        z-index: 10;
+        background: var(--yellow);
+      }
+
+      .section {
+        padding: 34px 16px;
+        border-bottom: var(--line);
+      }
+
+      .kicker {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin: 0;
+        font-size: 0.6rem;
+        font-weight: 700;
+        letter-spacing: 0.17em;
+        text-transform: uppercase;
+      }
+
+      .kicker::before {
+        content: '';
+        width: 9px;
+        height: 9px;
+        flex: 0 0 auto;
+        background: var(--ink);
+      }
+
+      .section h2 {
+        margin: 12px 0 0;
+        font-family: var(--display);
+        font-size: clamp(2.5rem, 11vw, 4.6rem);
+        font-weight: 400;
+        line-height: 0.9;
+        letter-spacing: 0.005em;
+        text-transform: uppercase;
+      }
+
+      .section__lede {
+        margin: 12px 0 0;
+        max-width: 44ch;
+        font-size: 0.8rem;
+        line-height: 1.65;
+      }
+
+      .section__lede strong {
+        background: var(--ink);
+        color: var(--yellow);
+        padding: 0 4px;
+      }
+
+      /* Hero ---------------------------------------------------------- */
+
+      .hero {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 26px;
+        padding-top: 22px;
+        padding-bottom: 0;
+      }
+
+      .hero__title {
+        margin: 8px 0 0;
+        font-family: var(--display);
+        font-size: clamp(4.4rem, 21vw, 8.6rem);
+        font-weight: 400;
+        line-height: 0.82;
+        letter-spacing: 0.005em;
+        text-transform: uppercase;
+      }
+
+      .hero__title span {
+        display: block;
+      }
+
+      .hero__title .outline {
+        color: var(--ink);
+        font-size: 0.62em;
+        letter-spacing: 0.02em;
+      }
+
+      @supports (-webkit-text-stroke: 1px #000) {
+        .hero__title .outline {
+          color: transparent;
+          -webkit-text-stroke: 2px var(--ink);
+        }
+      }
+
+      .hero__tagline {
+        margin: 18px 0 0;
+        max-width: 26ch;
+        font-family: var(--display);
+        font-size: clamp(1.5rem, 6vw, 2.25rem);
+        font-weight: 400;
+        line-height: 1;
+        letter-spacing: 0.01em;
+      }
+
+      .hero__copy {
+        margin: 10px 0 0;
+        max-width: 40ch;
+        font-size: 0.76rem;
+        line-height: 1.65;
+        opacity: 0.78;
+      }
+
+      .hero__actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 20px;
+      }
+
+      .hero__stats {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        margin-top: 26px;
+        border-top: var(--line);
+      }
+
+      .hero__stat {
+        padding: 12px 10px 14px 0;
+        border-right: 2px solid var(--ink);
+      }
+
+      .hero__stat:last-child {
+        border-right: 0;
+        padding-right: 0;
+        padding-left: 10px;
+      }
+
+      .hero__stat:nth-child(2) {
+        padding-left: 10px;
+      }
+
+      .hero__stat b {
+        display: block;
+        font-family: var(--display);
+        font-size: clamp(1.4rem, 5vw, 2rem);
+        font-weight: 400;
+        line-height: 1;
+        letter-spacing: 0.02em;
+        white-space: nowrap;
+      }
+
+      .hero__stat span {
+        display: block;
+        margin-top: 5px;
+        font-size: 0.48rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        opacity: 0.66;
+      }
+
+      /* Marquee ------------------------------------------------------- */
+
+      .marquee {
+        overflow: hidden;
+        padding: 9px 0;
+        background: var(--ink);
+        color: var(--yellow);
+        border-bottom: var(--line);
+      }
+
+      .marquee__track {
+        display: flex;
+        width: max-content;
+        animation: marquee 26s linear infinite;
+      }
+
+      .marquee__group {
+        display: flex;
+        flex: 0 0 auto;
+        gap: 26px;
+        padding-right: 26px;
+        font-family: var(--display);
+        font-size: 1.5rem;
+        letter-spacing: 0.06em;
+        white-space: nowrap;
+      }
+
+      .marquee__group span {
+        display: inline-flex;
+        align-items: center;
+        gap: 26px;
+      }
+
+      .marquee__group span::after {
+        content: '';
+        width: 9px;
+        height: 9px;
+        background: var(--yellow);
+      }
+
+      @keyframes marquee {
+        to {
+          transform: translateX(-50%);
+        }
+      }
+
+      /* Fleet --------------------------------------------------------- */
+
+      .fleet {
+        display: grid;
+        gap: 14px;
+        margin-top: 24px;
+      }
+
+      .bike {
+        position: relative;
+        padding: 15px;
+        background: var(--paper);
+        border: 3px solid var(--ink);
+        box-shadow: 7px 7px 0 var(--ink);
+        transition: background 160ms ease, color 160ms ease, box-shadow 160ms ease,
+          transform 160ms ease;
+      }
+
+      .bike[data-active='true'] {
+        background: var(--ink);
+        color: var(--paper);
+        box-shadow: 7px 7px 0 rgba(17, 17, 17, 0.28);
+      }
+
+      .bike__top {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid currentColor;
+      }
+
+      .bike__name {
+        margin: 0;
+        font-family: var(--display);
+        font-size: 2rem;
+        font-weight: 400;
+        line-height: 0.9;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+      }
+
+      .bike__code {
+        font-size: 0.56rem;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        opacity: 0.6;
+      }
+
+      .bike__blurb {
+        margin: 11px 0 14px;
+        min-height: 3.1em;
+        font-size: 0.72rem;
+        line-height: 1.55;
+      }
+
+      .bike__prices {
+        display: flex;
+        gap: 20px;
+        padding-top: 10px;
+        border-top: 2px solid currentColor;
+      }
+
+      .bike__price span {
+        display: block;
+        font-size: 0.48rem;
+        font-weight: 700;
+        letter-spacing: 0.13em;
+        text-transform: uppercase;
+        opacity: 0.65;
+      }
+
+      .bike__price b {
+        display: block;
+        margin-top: 2px;
+        font-family: var(--display);
+        font-size: 1.75rem;
+        font-weight: 400;
+        line-height: 1;
+        letter-spacing: 0.02em;
+      }
+
+      .bike__select {
+        width: 100%;
+        margin-top: 14px;
+        padding: 10px 12px;
+        font-size: 0.6rem;
+      }
+
+      .bike[data-active='true'] .bike__select {
+        border-color: var(--yellow);
+        background: var(--yellow);
+        color: var(--ink);
+      }
+
+      .fleet__note {
+        margin: 18px 0 0;
+        font-size: 0.6rem;
+        line-height: 1.6;
+        letter-spacing: 0.02em;
+        opacity: 0.7;
+      }
+
+      /* Steps --------------------------------------------------------- */
+
+      .steps {
+        display: grid;
+        gap: 0;
+        margin: 24px 0 0;
+        padding: 0;
+        list-style: none;
+        border: 3px solid var(--ink);
+        background: var(--paper);
+      }
+
+      .steps li {
+        display: grid;
+        grid-template-columns: 54px minmax(0, 1fr);
+        gap: 12px;
+        padding: 16px;
+        border-bottom: 3px solid var(--ink);
+      }
+
+      .steps li:last-child {
+        border-bottom: 0;
+      }
+
+      .steps__n {
+        font-family: var(--display);
+        font-size: 2.3rem;
+        line-height: 0.85;
+        letter-spacing: 0.02em;
+      }
+
+      .steps h3 {
+        margin: 0;
+        font-family: var(--display);
+        font-size: 1.5rem;
+        font-weight: 400;
+        line-height: 1;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+      }
+
+      .steps p {
+        margin: 5px 0 0;
+        font-size: 0.7rem;
+        line-height: 1.55;
+      }
+
+      /* Locations ----------------------------------------------------- */
+
+      .places {
+        margin: 24px 0 0;
+        padding: 0;
+        list-style: none;
+        border-top: 3px solid var(--ink);
+      }
+
+      .places li {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 14px 0;
+        border-bottom: 3px solid var(--ink);
+      }
+
+      .places__city {
+        font-family: var(--display);
+        font-size: 1.85rem;
+        line-height: 0.95;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+      }
+
+      .places__where {
+        margin: 4px 0 0;
+        font-size: 0.62rem;
+        line-height: 1.5;
+        opacity: 0.72;
+      }
+
+      .places__meta {
+        flex: 0 0 auto;
+        text-align: right;
+        font-size: 0.52rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .places__meta span {
+        display: block;
+        opacity: 0.6;
+      }
+
+      .places__note {
+        margin: 16px 0 0;
+        font-size: 0.66rem;
+        line-height: 1.6;
+      }
+
+      /* Booking ------------------------------------------------------- */
+
+      .book {
+        margin-top: 24px;
+        padding: 16px;
+        background: var(--paper);
+        border: 3px solid var(--ink);
+        box-shadow: 8px 8px 0 var(--ink);
+      }
+
+      .form {
+        display: grid;
+        gap: 13px;
+      }
+
+      .form[hidden] {
+        display: none;
+      }
+
+      .field {
+        display: grid;
+        gap: 5px;
+      }
+
+      .field--wide {
+        grid-column: 1 / -1;
+      }
+
+      .field label {
+        font-size: 0.54rem;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .field input,
+      .field select {
+        width: 100%;
+        min-height: 46px;
+        padding: 10px 11px;
+        border: 3px solid var(--ink);
+        border-radius: 0;
+        background: var(--yellow);
+        font-size: 0.86rem;
+      }
+
+      .field select {
+        appearance: none;
+        background-image: linear-gradient(45deg, transparent 50%, var(--ink) 50%),
+          linear-gradient(135deg, var(--ink) 50%, transparent 50%);
+        background-position: calc(100% - 18px) 50%, calc(100% - 12px) 50%;
+        background-size: 6px 6px, 6px 6px;
+        background-repeat: no-repeat;
+        padding-right: 34px;
+      }
+
+      .field input:focus-visible,
+      .field select:focus-visible {
+        outline: 3px solid var(--ink);
+        outline-offset: 2px;
+        box-shadow: inset 0 0 0 1px var(--paper);
+      }
+
+      .field input[aria-invalid='true'],
+      .field select[aria-invalid='true'] {
+        border-style: dashed;
+        border-width: 3px;
+      }
+
+      .field__row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 110px;
+        gap: 8px;
+      }
+
+      .err {
+        margin: 0;
+        font-size: 0.62rem;
+        font-weight: 700;
+        line-height: 1.4;
+      }
+
+      .err::before {
+        content: '!';
+        display: inline-grid;
+        place-items: center;
+        width: 13px;
+        height: 13px;
+        margin-right: 6px;
+        background: var(--ink);
+        color: var(--yellow);
+        font-size: 0.55rem;
+      }
+
+      .total {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 12px;
+        margin: 3px 0;
+        padding: 12px;
+        background: var(--ink);
+        color: var(--yellow);
+      }
+
+      .total__label {
+        margin: 0;
+        font-size: 0.52rem;
+        font-weight: 700;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+      }
+
+      .total__detail {
+        margin: 4px 0 0;
+        font-size: 0.56rem;
+        line-height: 1.45;
+        color: var(--paper);
+        opacity: 0.7;
+      }
+
+      .total__amount {
+        margin: 0;
+        font-family: var(--display);
+        font-size: 2.4rem;
+        line-height: 0.9;
+        letter-spacing: 0.02em;
+        white-space: nowrap;
+      }
+
+      .form__submit {
+        width: 100%;
+        padding: 14px;
+      }
+
+      .form__note {
+        margin: 0;
+        font-size: 0.56rem;
+        line-height: 1.55;
+        opacity: 0.7;
+      }
+
+      .confirmed[hidden] {
+        display: none;
+      }
+
+      .confirmed__band {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 12px;
+        background: var(--ink);
+        color: var(--yellow);
+        font-size: 0.56rem;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+
+      .confirmed h3 {
+        margin: 16px 0 0;
+        font-family: var(--display);
+        font-size: 2.1rem;
+        font-weight: 400;
+        line-height: 0.95;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+      }
+
+      .confirmed dl {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 5px 14px;
+        margin: 16px 0;
+        padding: 12px 0;
+        border-top: 2px solid var(--ink);
+        border-bottom: 2px solid var(--ink);
+        font-size: 0.66rem;
+      }
+
+      .confirmed dt {
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        opacity: 0.65;
+      }
+
+      .confirmed dd {
+        margin: 0;
+        text-align: right;
+      }
+
+      .confirmed__note {
+        margin: 0 0 14px;
+        font-size: 0.6rem;
+        line-height: 1.6;
+        opacity: 0.72;
+      }
+
+      /* Footer -------------------------------------------------------- */
+
+      .footer {
+        padding: 34px 16px 40px;
+        background: var(--ink);
+        color: var(--paper);
+      }
+
+      .footer__mark {
+        font-family: var(--display);
+        font-size: clamp(4rem, 23vw, 9rem);
+        line-height: 0.8;
+        letter-spacing: 0.01em;
+        color: var(--yellow);
+      }
+
+      .footer__grid {
+        display: grid;
+        gap: 22px;
+        margin-top: 28px;
+        padding-top: 22px;
+        border-top: 3px solid var(--yellow);
+      }
+
+      .footer h3 {
+        margin: 0 0 7px;
+        font-size: 0.54rem;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--yellow);
+      }
+
+      .footer p {
+        margin: 0;
+        font-size: 0.68rem;
+        line-height: 1.65;
+        color: var(--paper);
+        opacity: 0.8;
+      }
+
+      .footer a {
+        color: var(--yellow);
+        text-decoration-color: rgba(255, 212, 0, 0.4);
+        text-underline-offset: 3px;
+      }
+
+      .footer a:hover {
+        text-decoration-color: var(--yellow);
+      }
+
+      .socials {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 10px;
+      }
+
+      .socials a {
+        display: inline-block;
+        padding: 7px 10px;
+        border: 2px solid var(--yellow);
+        font-size: 0.54rem;
+        font-weight: 700;
+        letter-spacing: 0.13em;
+        text-transform: uppercase;
+        text-decoration: none;
+      }
+
+      .socials a:hover {
+        background: var(--yellow);
+        color: var(--ink);
+      }
+
+      .footer__legal {
+        margin-top: 26px !important;
+        padding-top: 16px;
+        border-top: 1px solid rgba(250, 250, 245, 0.25);
+        font-size: 0.55rem !important;
+        letter-spacing: 0.02em;
+        opacity: 0.55 !important;
+      }
+
+      /* ---------------------------------------------------------------- */
+      /* Desktop                                                          */
+      /* ---------------------------------------------------------------- */
+
+      @media (min-width: 900px) {
+        :root {
+          --bar: 70px;
+        }
+
+        body {
+          font-size: 16px;
+        }
+
+        .topbar {
+          padding: 0 28px;
+        }
+
+        .topbar__nav {
+          display: flex;
+        }
+
+        .brand strong {
+          font-size: 2.1rem;
+        }
+
+        .shell {
+          display: grid;
+          grid-template-columns: minmax(0, 45%) minmax(0, 55%);
+          align-items: start;
+        }
+
+        .stage {
+          grid-column: 2;
+          grid-row: 1;
+          top: var(--bar);
+          height: calc(100vh - var(--bar));
+          height: calc(100svh - var(--bar));
+          min-height: 0;
+          border-bottom: 0;
+          border-left: var(--line);
+        }
+
+        .content {
+          grid-column: 1;
+          grid-row: 1;
+          min-width: 0;
+        }
+
+        .section {
+          padding: 46px 40px;
+        }
+
+        .hero {
+          min-height: calc(100vh - var(--bar));
+          min-height: calc(100svh - var(--bar));
+          padding: 44px 40px 0;
+        }
+
+        .hero__title {
+          font-size: clamp(5rem, 8.2vw, 8.6rem);
+        }
+
+        .hero__tagline {
+          font-size: clamp(1.6rem, 2.6vw, 2.4rem);
+        }
+
+        .fleet {
+          gap: 16px;
+        }
+
+        .stage__badge {
+          top: 20px;
+          left: 20px;
+        }
+
+        .stage__speed {
+          top: 20px;
+          right: 20px;
+        }
+
+        .stage__bike {
+          left: 20px;
+          bottom: 20px;
+        }
+
+        .stage__hint {
+          right: 20px;
+          bottom: 20px;
+        }
+
+        .stage__ghost {
+          top: 44%;
+        }
+
+        .book {
+          padding: 22px;
+        }
+
+        .form {
+          grid-template-columns: 1fr 1fr;
+          gap: 16px;
+        }
+
+        .total,
+        .form__submit,
+        .form__note,
+        .field--wide {
+          grid-column: 1 / -1;
+        }
+
+        .footer {
+          padding: 54px 40px 46px;
+        }
+
+        .footer__grid {
+          grid-template-columns: 1.1fr 1fr 1fr;
+          gap: 32px;
+        }
+      }
+
+      @media (min-width: 1400px) {
+        .section {
+          padding-left: 56px;
+          padding-right: 56px;
+        }
+
+        .hero {
+          padding-left: 56px;
+          padding-right: 56px;
+        }
+      }
+
+      /* Short screens: keep the hero usable without scrolling through it. */
+      @media (max-height: 760px) and (min-width: 900px) {
+        .hero {
+          padding-top: 28px;
+        }
+
+        .hero__title {
+          font-size: clamp(4.4rem, 7.6vw, 7.4rem);
+        }
+
+        .hero__copy {
+          display: none;
+        }
+
+        .hero__stats {
+          margin-top: 18px;
+        }
+      }
+
+      /* ---------------------------------------------------------------- */
+      /* Reduced motion                                                   */
+      /* ---------------------------------------------------------------- */
+
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+
+        .marquee__track,
+        .stage__badge i {
+          animation: none;
+        }
+
+        .bike,
+        .btn,
+        .socials a {
+          transition: none;
+        }
+      }
+    </style>
+  </head>
+  <body class="is-loading">
+    <a class="skip" href="#main">Skip to content</a>
+
+    <div class="loader" id="loader" role="status" aria-live="polite" aria-label="Loading the FRESCA page">
+      <div class="loader__inner">
+        <div class="loader__brand">
+          <span>FRESCA</span>
+          <small>Bike<br />Rental</small>
+        </div>
+        <div class="loader__track" role="presentation">
+          <span class="loader__bar" id="loader-bar"></span>
+        </div>
+        <div class="loader__meta">
+          <span>Building the bike</span>
+          <span id="loader-pct">0%</span>
+        </div>
+        <p class="loader__note">Low-poly city bikes, real lights and a road that keeps moving.</p>
+      </div>
+    </div>
+
+        <header class="topbar">
+      <a class="brand" href="#top" aria-label="FRESCA Bike Rental, back to top">
+        <strong>FRESCA</strong>
+        <span>Bike&nbsp;Rental</span>
+      </a>
+      <nav class="topbar__nav" aria-label="Page sections">
+        <a href="#fleet">Fleet</a>
+        <a href="#how">How it works</a>
+        <a href="#locations">Locations</a>
+        <a href="#book">Book</a>
+      </nav>
+      <a class="btn btn--small" href="#book">Book a bike</a>
+    </header>
+
+    <div class="shell" id="top">
+      <!-- ============================================================= -->
+      <!-- 3D stage. The canvas is transparent; the yellow stage shows    -->
+      <!-- through it. The HUD is decorative but the bike name is mirrored -->
+      <!-- into a live region for screen readers.                         -->
+      <!-- ============================================================= -->
+      <aside class="stage" id="stage" aria-label="Interactive 3D bicycle">
+        <span class="stage__ghost" aria-hidden="true">RIDE</span>
+        <canvas class="stage__canvas" id="scene-canvas" aria-hidden="true"></canvas>
+
+        <div class="stage__hud" aria-hidden="true">
+          <span class="stage__badge"><i></i> Live 3D</span>
+          <span class="stage__speed" id="stage-speed">0 km/h</span>
+          <div class="stage__bike">
+            <span id="stage-code">01</span>
+            <strong id="stage-name">City</strong>
+          </div>
+          <span class="stage__hint" id="stage-hint">Move / drag to tilt</span>
+        </div>
+
+        <div class="stage__error" id="stage-error" hidden>
+          <div class="stage__error-card">
+            <strong>3D stage offline</strong>
+            <p id="stage-error-text">
+              The 3D engine could not start. The fleet, prices and booking form still work.
+            </p>
+          </div>
+        </div>
+
+        <p class="sr-only" id="stage-status" aria-live="polite">
+          Showing the City bike in 3D.
+        </p>
+      </aside>
+
+      <main class="content" id="main">
+        <!-- =========================================================== -->
+        <!-- Hero                                                        -->
+        <!-- =========================================================== -->
+        <section class="section hero" aria-labelledby="hero-title" data-rig="hero">
+          <div>
+            <p class="kicker">Kadapa &middot; Proddatur</p>
+            <h1 class="hero__title" id="hero-title">
+              <span>FRESCA</span>
+              <span class="outline">Bike Rental</span>
+            </h1>
+            <p class="hero__tagline">Pick a bike. Ride the city. Return anywhere.</p>
+            <p class="hero__copy">
+              City runabouts, trail-ready mountain bikes and quiet electric commuters.
+              Book online in two minutes, collect at your pickup point.
+            </p>
+            <div class="hero__actions">
+              <a class="btn" href="#book">Book a bike</a>
+              <a class="btn btn--ghost" href="#fleet">See the fleet</a>
+            </div>
+          </div>
+
+          <div class="hero__stats" aria-label="Rental facts">
+            <div class="hero__stat">
+              <b>&#8377;99</b>
+              <span>From / hour</span>
+            </div>
+            <div class="hero__stat">
+              <b>2</b>
+              <span>Pickup points</span>
+            </div>
+            <div class="hero__stat">
+              <b>21+</b>
+              <span>Minimum age</span>
+            </div>
+          </div>
+        </section>
+
+        <div class="marquee" aria-hidden="true">
+          <div class="marquee__track">
+            <div class="marquee__group">
+              <span>Pick a bike</span><span>Ride the city</span><span>Return anywhere</span>
+              <span>21+ to ride</span><span>Book online</span>
+            </div>
+            <div class="marquee__group">
+              <span>Pick a bike</span><span>Ride the city</span><span>Return anywhere</span>
+              <span>21+ to ride</span><span>Book online</span>
+            </div>
+          </div>
+        </div>
+
+                <!-- =========================================================== -->
+        <!-- Fleet                                                       -->
+        <!-- =========================================================== -->
+        <section class="section" id="fleet" aria-labelledby="fleet-title" data-rig="types">
+          <p class="kicker">01 / The fleet</p>
+          <h2 id="fleet-title">Three bikes. One city.</h2>
+          <p class="section__lede">
+            Pick a bike and the model on the right changes with you.
+            <strong>Prices are per bike, per hour or per day.</strong>
+          </p>
+
+          <div class="fleet" id="fleet-list">
+            <!-- Cards are generated from the BIKES data in the script. -->
+          </div>
+
+          <p class="fleet__note">
+            Bring photo ID to pickup. Riders must be 21 or older.
+          </p>
+        </section>
+
+        <!-- =========================================================== -->
+        <!-- How it works                                                -->
+        <!-- =========================================================== -->
+        <section class="section" id="how" aria-labelledby="how-title" data-rig="how">
+          <p class="kicker">02 / How it works</p>
+          <h2 id="how-title">Choose. Unlock. Ride.</h2>
+          <p class="section__lede">Three steps, in this order. Nothing hidden.</p>
+
+          <ol class="steps">
+            <li>
+              <span class="steps__n" aria-hidden="true">01</span>
+              <div>
+                <h3>Choose</h3>
+                <p>Pick a bike and a pickup point. Check the price before you book.</p>
+              </div>
+            </li>
+            <li>
+              <span class="steps__n" aria-hidden="true">02</span>
+              <div>
+                <h3>Unlock</h3>
+                <p>
+                  Check in with photo ID. Riders must be 21 or older.
+                </p>
+              </div>
+            </li>
+            <li>
+              <span class="steps__n" aria-hidden="true">03</span>
+              <div>
+                <h3>Ride</h3>
+                <p>
+                  Head out. Return to either pickup point before your rental
+                  time ends.
+                </p>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+                <!-- =========================================================== -->
+        <!-- Locations                                                   -->
+        <!-- =========================================================== -->
+        <section class="section" id="locations" aria-labelledby="locations-title" data-rig="locations">
+          <p class="kicker">03 / Pickup points</p>
+          <h2 id="locations-title">Return anywhere.</h2>
+          <p class="section__lede">
+            Collect from one pickup point, drop at the other.
+          </p>
+
+          <ul class="places">
+            <li>
+              <div>
+                <p class="places__city">Kadapa</p>
+                <p class="places__where">New Bus Stand pickup point</p>
+              </div>
+              <p class="places__meta">Pickup point<span>Hours on booking</span></p>
+            </li>
+            <li>
+              <div>
+                <p class="places__city">Proddatur</p>
+                <p class="places__where">One Town Police Station pickup point</p>
+              </div>
+              <p class="places__meta">Pickup point<span>Hours on booking</span></p>
+            </li>
+          </ul>
+
+          <p class="places__note">
+            Opening hours are confirmed when you book. Bring photo ID; riders must
+            be 21 or older.
+          </p>
+        </section>
+
+        <!-- =========================================================== -->
+        <!-- Booking                                                     -->
+        <!-- =========================================================== -->
+        <section class="section" id="book" aria-labelledby="book-title" data-rig="book">
+          <p class="kicker">04 / Book</p>
+          <h2 id="book-title">Reserve your ride.</h2>
+          <p class="section__lede">
+            One form, one price. Pay at the pickup point when you collect.
+          </p>
+
+          <div class="book">
+            <form class="form" id="booking-form" novalidate>
+              <div class="field">
+                <label for="f-name">Full name</label>
+                <input
+                  id="f-name"
+                  name="name"
+                  type="text"
+                  autocomplete="name"
+                  placeholder="As printed on your ID"
+                  required
+                />
+                <p class="err" id="err-name" hidden></p>
+              </div>
+
+              <div class="field">
+                <label for="f-phone">Phone</label>
+                <input
+                  id="f-phone"
+                  name="phone"
+                  type="tel"
+                  inputmode="tel"
+                  autocomplete="tel"
+                  placeholder="+91 90000 00000"
+                  required
+                />
+                <p class="err" id="err-phone" hidden></p>
+              </div>
+
+              <div class="field">
+                <label for="f-type">Bike type</label>
+                <select id="f-type" name="type" required></select>
+                <p class="err" id="err-type" hidden></p>
+              </div>
+
+              <div class="field">
+                <label for="f-date">Pickup date</label>
+                <input id="f-date" name="date" type="date" required />
+                <p class="err" id="err-date" hidden></p>
+              </div>
+
+              <div class="field field--wide">
+                <label for="f-qty">Duration</label>
+                <div class="field__row">
+                  <input
+                    id="f-qty"
+                    name="qty"
+                    type="number"
+                    inputmode="numeric"
+                    min="1"
+                    max="30"
+                    step="1"
+                    value="1"
+                    required
+                  />
+                  <select id="f-unit" name="unit" aria-label="Duration unit">
+                    <option value="days">Days</option>
+                    <option value="hours">Hours</option>
+                  </select>
+                </div>
+                <p class="err" id="err-qty" hidden></p>
+              </div>
+
+              <div class="total" aria-live="polite">
+                <div>
+                  <p class="total__label">Estimated total</p>
+                  <p class="total__detail" id="total-detail">City &middot; 1 day &times; &#8377;499</p>
+                </div>
+                <p class="total__amount" id="total-amount">&#8377;499</p>
+              </div>
+
+              <button class="btn form__submit" type="submit">Confirm booking</button>
+              <p class="form__note">
+                Demo page: this booking stays in memory for this tab only and is not
+                sent to FRESCA. No payment is taken here.
+              </p>
+            </form>
+
+            <div class="confirmed" id="booking-done" tabindex="-1" hidden aria-live="polite">
+              <div class="confirmed__band">
+                <span>Confirmed</span>
+                <span id="done-ref">FR-00000</span>
+              </div>
+              <h3>Booked. See you at pickup.</h3>
+              <dl>
+                <dt>Name</dt>
+                <dd id="done-name">&mdash;</dd>
+                <dt>Bike</dt>
+                <dd id="done-bike">&mdash;</dd>
+                <dt>Pickup</dt>
+                <dd id="done-date">&mdash;</dd>
+                <dt>Duration</dt>
+                <dd id="done-duration">&mdash;</dd>
+                <dt>Total</dt>
+                <dd id="done-total">&mdash;</dd>
+              </dl>
+              <p class="confirmed__note">
+                This is a demo confirmation. Nothing has been charged and no booking
+                was sent. Email us to make it real.
+              </p>
+              <button class="btn btn--ghost" id="book-again" type="button">Book another bike</button>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <footer class="footer on-dark" id="contact">
+      <p class="footer__mark" aria-hidden="true">FRESCA</p>
+      <div class="footer__grid">
+        <div>
+          <h3>Pickup points</h3>
+          <p>
+            Kadapa &middot; New Bus Stand<br />
+            Proddatur &middot; One Town Police Station
+          </p>
+        </div>
+        <div>
+          <h3>Contact</h3>
+          <p>
+            <a href="mailto:navaneethreddychagari1005@gmail.com">navaneethreddychagari1005@gmail.com</a><br />
+            Opening hours are confirmed when you book.
+          </p>
+        </div>
+        <div>
+          <h3>Follow</h3>
+          <!-- Replace these with the studio's own profile URLs before launch. -->
+          <div class="socials">
+            <a href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer">Instagram</a>
+            <a href="https://www.facebook.com/" target="_blank" rel="noopener noreferrer">Facebook</a>
+            <a href="https://www.youtube.com/" target="_blank" rel="noopener noreferrer">YouTube</a>
+          </div>
+        </div>
+      </div>
+      <p class="footer__legal">
+        &copy; 2026 FRESCA Bike Rental. Demo landing page. Bookings are held in this
+        browser tab only. Riders must be 21 or older.
+      </p>
+    </footer>
+
+    <noscript>
+      <p style="padding:16px;background:#111;color:#ffd400;font-family:monospace">
+        This page needs JavaScript for the 3D bike and the booking form. Enable it and
+        reload to book.
+      </p>
+    </noscript>
+
+        <!-- Pinned Three.js r149 UMD build from cdnjs. Classic script so the page
+         also runs when opened directly from disk (file://), with no server. -->
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.149.0/three.min.js"
+      integrity="sha512-6p9lGA4Cm89KiwN1CixiOVQU2H9e13LeYoN6/Hj/qoUhtrMW5vNiqQz9Z96Z7/I8u89ghL6SPBz9na5HFVzF3g=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+
+    <script>
+      (function () {
+        'use strict';
+
+        /* ================================================================
+           1. DATA — one source of truth for prices, copy and 3D morphs
+           ================================================================ */
+        const BIKES = {
+          city: {
+            name: 'City',
+            code: '01',
+            blurb:
+              'Upright, light and easy in traffic. Basket and lights for the commute.',
+            hour: 99,
+            day: 499,
+            // Morph targets for the 3D model.
+            wheel: 0.96,
+            barWidth: 0.5,
+            barRise: 0.02,
+            battery: 0,
+          },
+          mountain: {
+            name: 'Mountain',
+            code: '02',
+            blurb:
+              'Wide bars, fat tyres and low gears for the gravel roads outside town.',
+            hour: 149,
+            day: 799,
+            wheel: 1.08,
+            barWidth: 0.68,
+            barRise: 0,
+            battery: 0,
+          },
+          electric: {
+            name: 'Electric',
+            code: '03',
+            blurb:
+              'Quiet pedal assist for long commutes and hot afternoons. 60 km range.',
+            hour: 199,
+            day: 999,
+            wheel: 1.0,
+            barWidth: 0.56,
+            barRise: 0.09,
+            battery: 1,
+          },
+        };
+        const BIKE_KEYS = Object.keys(BIKES);
+
+        /* Camera + pose rigs, one per section. The scroll logic blends
+           towards the rig of whichever section is under the reading line.
+           `dist` is a multiplier on the auto-fit distance, `look` is the
+           height of the point the camera aims at. */
+        const RIGS = {
+          hero: { az: 0.62, el: 0.16, dist: 3.35, yaw: 0.0, steer: 0.1, look: 0.44, pan: 0.12 },
+          types: { az: 0.06, el: 0.3, dist: 3.8, yaw: -0.22, steer: -0.18, look: 0.44, pan: 0.07 },
+          how: { az: -0.6, el: 0.38, dist: 3.6, yaw: 0.05, steer: 0.15, look: 0.43, pan: 0.05 },
+          locations: { az: 2.55, el: 0.24, dist: 3.95, yaw: -0.3, steer: 0.2, look: 0.43, pan: -0.1 },
+          book: { az: 0.95, el: 0.1, dist: 4.1, yaw: 0.1, steer: 0.0, look: 0.4, pan: 0.06 },
+        };
+
+        const REDUCED_QUERY = window.matchMedia('(prefers-reduced-motion: reduce)');
+        let reducedMotion = REDUCED_QUERY.matches;
+        if (typeof REDUCED_QUERY.addEventListener === 'function') {
+          REDUCED_QUERY.addEventListener('change', function (event) {
+            reducedMotion = event.matches;
+          });
+        }
+
+        /* ================================================================
+           2. SMALL HELPERS
+           ================================================================ */
+        const $ = (selector, root) => (root || document).querySelector(selector);
+        const $$ = (selector, root) =>
+          Array.prototype.slice.call((root || document).querySelectorAll(selector));
+        const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+        const damp = (current, target, lambda, dt) =>
+          current + (target - current) * (1 - Math.exp(-lambda * dt));
+
+        const money = (amount) =>
+          new Intl.NumberFormat('en-IN', {
+            style: 'currency',
+            currency: 'INR',
+            maximumFractionDigits: 0,
+          }).format(amount);
+
+        /* Storage is optional: private mode or file:// can throw. Bookings
+           themselves are never stored — only the last bike type is remembered. */
+        const safeStorage = {
+          get(key) {
+            try {
+              return window.localStorage.getItem(key);
+            } catch (error) {
+              return null;
+            }
+          },
+          set(key, value) {
+            try {
+              window.localStorage.setItem(key, value);
+            } catch (error) {
+              /* Ignore. The page works without storage. */
+            }
+          },
+        };
+
+        /* ================================================================
+           3. DOM
+           ================================================================ */
+        const loader = $('#loader');
+        const loaderBar = $('#loader-bar');
+        const loaderPct = $('#loader-pct');
+        const stage = $('#stage');
+        const stageCanvas = $('#scene-canvas');
+        const stageError = $('#stage-error');
+        const stageErrorText = $('#stage-error-text');
+        const stageName = $('#stage-name');
+        const stageCode = $('#stage-code');
+        const stageSpeed = $('#stage-speed');
+        const stageStatus = $('#stage-status');
+        const fleetList = $('#fleet-list');
+
+        const form = $('#booking-form');
+        const done = $('#booking-done');
+        const typeSelect = $('#f-type');
+        const nameInput = $('#f-name');
+        const phoneInput = $('#f-phone');
+        const dateInput = $('#f-date');
+        const qtyInput = $('#f-qty');
+        const unitSelect = $('#f-unit');
+        const totalAmount = $('#total-amount');
+        const totalDetail = $('#total-detail');
+
+        /* ================================================================
+           4. LOADER — real build steps feed the percentage
+           ================================================================ */
+        const loaderState = {
+          progress: 0,
+          target: 8,
+          startedAt: performance.now(),
+          done: false,
+        };
+
+        function setLoadTarget(value) {
+          loaderState.target = Math.max(loaderState.target, value);
+        }
+
+        function paintLoader() {
+          const pct = clamp(loaderState.progress, 0, 100);
+          loaderBar.style.width = pct.toFixed(1) + '%';
+          loaderPct.textContent = Math.round(pct) + '%';
+        }
+
+        function loaderFrame(now) {
+          if (loaderState.done) return;
+
+          loaderState.progress = damp(
+            loaderState.progress,
+            loaderState.target,
+            5,
+            1 / 60,
+          );
+
+          /* Do not flash the loader away; hold for a moment so the progress
+             is readable, then finish. */
+          if (
+            loaderState.target >= 100 &&
+            now - loaderState.startedAt > 850 &&
+            loaderState.progress > 99.2
+          ) {
+            loaderState.progress = 100;
+            paintLoader();
+            finishLoader();
+            return;
+          }
+
+          paintLoader();
+          requestAnimationFrame(loaderFrame);
+        }
+
+        function finishLoader() {
+          if (loaderState.done) return;
+          loaderState.done = true;
+          loaderState.progress = 100;
+          paintLoader();
+          loader.setAttribute('data-done', 'true');
+          document.body.classList.remove('is-loading');
+          window.setTimeout(function () {
+            loader.hidden = true;
+          }, 500);
+        }
+
+        function failStage(message) {
+          console.error('[FRESCA] 3D stage failed:', message);
+          stage.classList.add('stage--failed');
+          stageError.hidden = false;
+          stageErrorText.textContent =
+            message ||
+            'The 3D engine could not start. The fleet, prices and booking form still work.';
+          setLoadTarget(100);
+          if (!loaderState.done) {
+            loaderState.progress = Math.max(loaderState.progress, 99.5);
+          }
+        }
+
+        /* ================================================================
+           5. FLEET CARDS + LIVE PRICE
+           ================================================================ */
+        let currentType = 'city';
+        let applyBikeType = null; /* assigned by the 3D module */
+
+        function renderFleet() {
+          fleetList.innerHTML = BIKE_KEYS.map(function (key) {
+            const bike = BIKES[key];
+            return (
+              '<article class="bike" data-bike="' +
+              key +
+              '" data-active="false">' +
+              '<div class="bike__top">' +
+              '<h3 class="bike__name">' +
+              bike.name +
+              '</h3>' +
+              '<span class="bike__code">' +
+              bike.code +
+              '</span>' +
+              '</div>' +
+              '<p class="bike__blurb">' +
+              bike.blurb +
+              '</p>' +
+              '<div class="bike__prices">' +
+              '<div class="bike__price"><span>Per hour</span><b>' +
+              money(bike.hour) +
+              '</b></div>' +
+              '<div class="bike__price"><span>Per day</span><b>' +
+              money(bike.day) +
+              '</b></div>' +
+              '</div>' +
+              '<button class="btn bike__select" type="button" data-select="' +
+              key +
+              '" aria-pressed="false">Select ' +
+              bike.name +
+              '</button>' +
+              '</article>'
+            );
+          }).join('');
+
+          typeSelect.innerHTML = BIKE_KEYS.map(function (key) {
+            return '<option value="' + key + '">' + BIKES[key].name + '</option>';
+          }).join('');
+        }
+
+        function selectBike(key) {
+          if (!BIKES[key]) return;
+          currentType = key;
+          safeStorage.set('fresca:bike-type', key);
+
+          $$('.bike').forEach(function (card) {
+            const active = card.getAttribute('data-bike') === key;
+            card.setAttribute('data-active', active ? 'true' : 'false');
+            const button = $('.bike__select', card);
+            button.setAttribute('aria-pressed', active ? 'true' : 'false');
+            button.textContent = active
+              ? 'Selected'
+              : 'Select ' + BIKES[card.getAttribute('data-bike')].name;
+          });
+
+          typeSelect.value = key;
+          stageName.textContent = BIKES[key].name;
+          stageCode.textContent = BIKES[key].code;
+          stageStatus.textContent = 'Showing the ' + BIKES[key].name + ' bike in 3D.';
+
+          updateTotal();
+          if (applyBikeType) applyBikeType(key);
+        }
+
+        function readForm() {
+          const bike = BIKES[typeSelect.value] || BIKES.city;
+          const qty = clamp(parseInt(qtyInput.value, 10) || 1, 1, 30);
+          const unit = unitSelect.value === 'hours' ? 'hours' : 'days';
+          const rate = unit === 'hours' ? bike.hour : bike.day;
+          const total = qty * rate;
+          return { bike: bike, key: typeSelect.value, qty: qty, unit: unit, rate: rate, total: total };
+        }
+
+        function updateTotal() {
+          if (!typeSelect.value) return;
+          const data = readForm();
+          totalAmount.textContent = money(data.total);
+          totalDetail.textContent =
+            data.bike.name +
+            ' \u00b7 ' +
+            data.qty +
+            ' ' +
+            (data.qty === 1 ? data.unit.slice(0, -1) : data.unit) +
+            ' \u00d7 ' +
+            money(data.rate);
+        }
+
+        /* ================================================================
+           6. BOOKING FORM — validated, in-memory only
+           ================================================================ */
+        const bookings = [];
+
+        function todayISO() {
+          const now = new Date();
+          return (
+            now.getFullYear() +
+            '-' +
+            String(now.getMonth() + 1).padStart(2, '0') +
+            '-' +
+            String(now.getDate()).padStart(2, '0')
+          );
+        }
+
+        function setFieldError(key, message) {
+          const input = $('#' + (key === 'type' ? 'f-type' : 'f-' + key));
+          const err = $('#err-' + key);
+          if (!input || !err) return;
+          if (message) {
+            input.setAttribute('aria-invalid', 'true');
+            err.textContent = message;
+            err.hidden = false;
+          } else {
+            input.removeAttribute('aria-invalid');
+            err.textContent = '';
+            err.hidden = true;
+          }
+        }
+
+        function validateForm() {
+          const errors = {};
+
+          if (nameInput.value.trim().length < 2) {
+            errors.name = 'Add the full name the booking is under.';
+          }
+
+          if (!/^[+\d][\d\s()-]{6,19}$/.test(phoneInput.value.trim())) {
+            errors.phone = 'Add a phone number we can reach you on.';
+          }
+
+          if (!typeSelect.value || !BIKES[typeSelect.value]) {
+            errors.type = 'Choose a bike type.';
+          }
+
+          if (!dateInput.value) {
+            errors.date = 'Choose a pickup date.';
+          } else if (dateInput.value < todayISO()) {
+            errors.date = 'Pick today or a later date.';
+          }
+
+          const qty = Number(qtyInput.value);
+          if (!Number.isInteger(qty) || qty < 1 || qty > 30) {
+            errors.qty = 'Duration must be between 1 and 30.';
+          }
+
+          return errors;
+        }
+
+        function handleSubmit(event) {
+          event.preventDefault();
+          const errors = validateForm();
+          ['name', 'phone', 'type', 'date', 'qty'].forEach(function (key) {
+            setFieldError(key, errors[key] || '');
+          });
+
+          const firstError = Object.keys(errors)[0];
+          if (firstError) {
+            const input = $('#' + (firstError === 'type' ? 'f-type' : 'f-' + firstError));
+            if (input) input.focus();
+            return;
+          }
+
+          const data = readForm();
+          const reference =
+            'FR-' +
+            Math.random().toString(36).slice(2, 7).toUpperCase().padEnd(5, '0');
+
+          bookings.push({
+            reference: reference,
+            name: nameInput.value.trim(),
+            phone: phoneInput.value.trim(),
+            type: data.key,
+            date: dateInput.value,
+            qty: data.qty,
+            unit: data.unit,
+            total: data.total,
+          });
+
+          $('#done-ref').textContent = reference;
+          $('#done-name').textContent = nameInput.value.trim();
+          $('#done-bike').textContent = data.bike.name;
+          $('#done-date').textContent = new Date(
+            dateInput.value + 'T09:00:00',
+          ).toLocaleDateString('en-IN', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+          });
+          $('#done-duration').textContent =
+            data.qty + ' ' + (data.qty === 1 ? data.unit.slice(0, -1) : data.unit);
+          $('#done-total').textContent = money(data.total);
+
+          form.hidden = true;
+          done.hidden = false;
+          done.focus();
+          done.scrollIntoView({
+            block: 'center',
+            behavior: reducedMotion ? 'auto' : 'smooth',
+          });
+        }
+
+        function resetBooking() {
+          form.reset();
+          dateInput.value = todayISO();
+          qtyInput.value = '1';
+          unitSelect.value = 'days';
+          typeSelect.value = currentType;
+          ['name', 'phone', 'type', 'date', 'qty'].forEach(function (key) {
+            setFieldError(key, '');
+          });
+          updateTotal();
+          done.hidden = true;
+          form.hidden = false;
+          nameInput.focus();
+        }
+
+        /* ================================================================
+           7. WIRE UP THE DOM
+           ================================================================ */
+        renderFleet();
+
+        /* Restore the last bike type, if storage allowed it. */
+        const savedType = safeStorage.get('fresca:bike-type');
+        if (savedType && BIKES[savedType]) currentType = savedType;
+
+        dateInput.min = todayISO();
+        dateInput.value = todayISO();
+
+        fleetList.addEventListener('click', function (event) {
+          const button = event.target.closest('[data-select]');
+          if (button) {
+            selectBike(button.getAttribute('data-select'));
+            return;
+          }
+          const card = event.target.closest('.bike');
+          if (card) selectBike(card.getAttribute('data-bike'));
+        });
+
+        typeSelect.addEventListener('change', function () {
+          selectBike(typeSelect.value);
+        });
+
+        [qtyInput, unitSelect].forEach(function (element) {
+          element.addEventListener('input', updateTotal);
+          element.addEventListener('change', updateTotal);
+        });
+
+        [nameInput, phoneInput, qtyInput].forEach(function (element) {
+          element.addEventListener('input', function () {
+            setFieldError(element.id.replace('f-', ''), '');
+          });
+        });
+        [typeSelect, dateInput].forEach(function (element) {
+          element.addEventListener('change', function () {
+            setFieldError(element.id.replace('f-', ''), '');
+          });
+        });
+
+        form.addEventListener('submit', handleSubmit);
+        $('#book-again').addEventListener('click', resetBooking);
+
+        selectBike(currentType);
+        updateTotal();
+
+        requestAnimationFrame(loaderFrame);
+
+        /* ================================================================
+           8. THREE.JS — scene, lights, environment and road
+           ================================================================ */
+        let renderer = null;
+        let scene = null;
+        let camera = null;
+        let bike = null;
+        let bikeRoot = null;
+        let roadMap = null;
+
+        const view = {
+          current: Object.assign({}, RIGS.hero),
+          pointer: { x: 0, y: 0 },
+          pointerTarget: { x: 0, y: 0 },
+          activeRig: 'hero',
+          spin: 0,
+          boost: 0,
+          lastScroll: window.scrollY || 0,
+          lastTime: 0,
+          startedAt: performance.now(),
+          speedShownAt: 0,
+          running: false,
+        };
+
+        /* A tiny equirectangular studio made of flat colour bands. It gives
+           the chrome and the yellow frame real reflections without loading
+           an HDRI file. */
+        function makeEnvironment(targetRenderer) {
+          const canvas = document.createElement('canvas');
+          canvas.width = 512;
+          canvas.height = 256;
+          const ctx = canvas.getContext('2d');
+
+          ctx.fillStyle = '#fff8dc';
+          ctx.fillRect(0, 0, 512, 96);
+          ctx.fillStyle = '#ffd400';
+          ctx.fillRect(0, 96, 512, 88);
+          ctx.fillStyle = '#241f0a';
+          ctx.fillRect(0, 184, 512, 72);
+
+          /* Bright softboxes make the metal read as metal. */
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(34, 18, 132, 66);
+          ctx.fillRect(338, 34, 96, 58);
+          ctx.fillStyle = '#ffd400';
+          ctx.fillRect(206, 0, 38, 184);
+
+          const texture = new THREE.CanvasTexture(canvas);
+          texture.mapping = THREE.EquirectangularReflectionMapping;
+          texture.encoding = THREE.sRGBEncoding;
+
+          const pmrem = new THREE.PMREMGenerator(targetRenderer);
+          pmrem.compileEquirectangularShader();
+          const envTarget = pmrem.fromEquirectangular(texture);
+          texture.dispose();
+          pmrem.dispose();
+          return envTarget.texture;
+        }
+
+        /* The road is a repeating canvas texture. Scrolling offset.x makes
+           the dashes travel backwards, which reads as forward motion. */
+        function makeRoadTexture(targetRenderer) {
+          const canvas = document.createElement('canvas');
+          canvas.width = 512;
+          canvas.height = 128;
+          const ctx = canvas.getContext('2d');
+
+          ctx.fillStyle = '#212121';
+          ctx.fillRect(0, 0, 512, 128);
+
+          /* Sparse aggregate speckle. */
+          for (let i = 0; i < 900; i += 1) {
+            ctx.fillStyle =
+              i % 3 === 0 ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.28)';
+            ctx.fillRect(Math.random() * 512, Math.random() * 128, 2, 2);
+          }
+
+          /* Solid edge lines. */
+          ctx.fillStyle = '#fafaf5';
+          ctx.fillRect(0, 7, 512, 5);
+          ctx.fillRect(0, 116, 512, 5);
+
+          /* Yellow centre dashes, running along the direction of travel. */
+          ctx.fillStyle = '#ffd400';
+          for (let x = 0; x < 512; x += 120) {
+            ctx.fillRect(x + 10, 58, 72, 9);
+          }
+
+          const texture = new THREE.CanvasTexture(canvas);
+          texture.wrapS = THREE.RepeatWrapping;
+          texture.wrapT = THREE.ClampToEdgeWrapping;
+          texture.repeat.set(14, 1);
+          texture.anisotropy = Math.min(
+            8,
+            targetRenderer.capabilities.getMaxAnisotropy(),
+          );
+          texture.encoding = THREE.sRGBEncoding;
+          return texture;
+        }
+
+        function makeContactTexture() {
+          const canvas = document.createElement('canvas');
+          canvas.width = 128;
+          canvas.height = 128;
+          const ctx = canvas.getContext('2d');
+          const gradient = ctx.createRadialGradient(64, 64, 4, 64, 64, 62);
+          gradient.addColorStop(0, 'rgba(0,0,0,0.55)');
+          gradient.addColorStop(0.55, 'rgba(0,0,0,0.24)');
+          gradient.addColorStop(1, 'rgba(0,0,0,0)');
+          ctx.fillStyle = gradient;
+          ctx.fillRect(0, 0, 128, 128);
+          return new THREE.CanvasTexture(canvas);
+        }
+
+        function initStage() {
+          if (!window.THREE) {
+            failStage(
+              'The 3D engine did not load. Check your connection, then reload. The fleet, prices and booking form still work.',
+            );
+            return;
+          }
+
+          try {
+            renderer = new THREE.WebGLRenderer({
+              canvas: stageCanvas,
+              antialias: true,
+              alpha: true,
+              powerPreference: 'high-performance',
+            });
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+            renderer.outputEncoding = THREE.sRGBEncoding;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 0.98;
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.setClearColor(0x000000, 0);
+          } catch (error) {
+            failStage(
+              'WebGL could not start in this browser. The fleet, prices and booking form still work.',
+            );
+            return;
+          }
+
+          scene = new THREE.Scene();
+          scene.fog = new THREE.Fog(0xffd400, 8, 24);
+
+          camera = new THREE.PerspectiveCamera(40, 1, 0.1, 80);
+          camera.position.set(2.4, 1.4, 3.2);
+          camera.lookAt(0, 0.56, 0);
+
+          scene.environment = makeEnvironment(renderer);
+
+          /* -------- lighting -------- */
+          const hemi = new THREE.HemisphereLight(0xfff7dc, 0x9a7d00, 0.55);
+          scene.add(hemi);
+
+          const key = new THREE.DirectionalLight(0xfff6e0, 1.95);
+          key.position.set(3.4, 6, 3.6);
+          key.castShadow = true;
+          key.shadow.mapSize.set(
+            Math.min(window.innerWidth, 1600) > 1100 ? 2048 : 1024,
+            Math.min(window.innerWidth, 1600) > 1100 ? 2048 : 1024,
+          );
+          key.shadow.camera.near = 0.5;
+          key.shadow.camera.far = 18;
+          key.shadow.camera.left = -3.6;
+          key.shadow.camera.right = 3.6;
+          key.shadow.camera.top = 3.6;
+          key.shadow.camera.bottom = -3.6;
+          key.shadow.bias = -0.0007;
+          key.shadow.normalBias = 0.025;
+          key.target.position.set(0, 0.45, 0);
+          scene.add(key);
+          scene.add(key.target);
+
+          const fill = new THREE.DirectionalLight(0xffffff, 0.5);
+          fill.position.set(-4, 2.8, 3);
+          scene.add(fill);
+
+          const rim = new THREE.DirectionalLight(0xffe9b0, 0.75);
+          rim.position.set(-2.6, 3.4, -4.2);
+          scene.add(rim);
+
+          /* -------- ground + road -------- */
+          /* The stage's own yellow is the ground: this plane is invisible
+             except for the shadow it catches, so the canvas edge and the
+             page background match exactly. */
+          const ground = new THREE.Mesh(
+            new THREE.PlaneGeometry(90, 90),
+            new THREE.ShadowMaterial({
+              color: 0x111111,
+              opacity: 0.26,
+              transparent: true,
+            }),
+          );
+          ground.rotation.x = -Math.PI / 2;
+          ground.position.y = 0.014;
+          ground.receiveShadow = true;
+          scene.add(ground);
+
+          /* The road is unlit so its palette stays exactly #212121 and
+             #ffd400 no matter how the bike is lit. */
+          roadMap = makeRoadTexture(renderer);
+          const road = new THREE.Mesh(
+            new THREE.PlaneGeometry(60, 2.4),
+            new THREE.MeshBasicMaterial({
+              map: roadMap,
+              toneMapped: false,
+            }),
+          );
+          road.rotation.x = -Math.PI / 2;
+          road.position.y = 0.006;
+          scene.add(road);
+
+          /* A soft blob under the bike guarantees contact even where the
+             real shadow falls on the dark road. */
+          const blob = new THREE.Mesh(
+            new THREE.PlaneGeometry(2.1, 0.85),
+            new THREE.MeshBasicMaterial({
+              map: makeContactTexture(),
+              transparent: true,
+              opacity: 0.55,
+              depthWrite: false,
+            }),
+          );
+          blob.rotation.x = -Math.PI / 2;
+          blob.position.set(0, 0.02, 0);
+          scene.add(blob);
+
+          /* -------- the bike -------- */
+          bike = buildBike();
+          bikeRoot = new THREE.Group();
+          bikeRoot.rotation.order = 'YXZ';
+          bikeRoot.add(bike.root);
+          scene.add(bikeRoot);
+
+          /* Node transforms are updated by the morph + animation loop. */
+          applyBikeType = function (key) {
+            bike.target = BIKES[key] || BIKES.city;
+          };
+          bike.target = BIKES[currentType] || BIKES.city;
+
+          setLoadTarget(62);
+
+          resizeStage();
+          if (typeof ResizeObserver === 'function') {
+            new ResizeObserver(resizeStage).observe(stage);
+          } else {
+            window.addEventListener('resize', resizeStage);
+          }
+
+          /* -------- interaction -------- */
+          window.addEventListener(
+            'pointermove',
+            function (event) {
+              if (event.pointerType === 'touch') return;
+              view.pointerTarget.x = (event.clientX / window.innerWidth) * 2 - 1;
+              view.pointerTarget.y = (event.clientY / window.innerHeight) * 2 - 1;
+            },
+            { passive: true },
+          );
+
+          document.addEventListener('pointerleave', function () {
+            view.pointerTarget.x = 0;
+            view.pointerTarget.y = 0;
+          });
+
+          /* Touch drag on the stage tilts the bike. Vertical swipes still
+             scroll because the stage uses touch-action: pan-y. */
+          let drag = null;
+          stage.addEventListener(
+            'pointerdown',
+            function (event) {
+              if (event.pointerType !== 'touch') return;
+              drag = { x: event.clientX, y: event.clientY, px: view.pointerTarget.x, py: view.pointerTarget.y };
+            },
+            { passive: true },
+          );
+          stage.addEventListener(
+            'pointermove',
+            function (event) {
+              if (!drag || event.pointerType !== 'touch') return;
+              view.pointerTarget.x = clamp(drag.px + (event.clientX - drag.x) / 110, -1, 1);
+              view.pointerTarget.y = clamp(drag.py + (event.clientY - drag.y) / 140, -1, 1);
+            },
+            { passive: true },
+          );
+          stage.addEventListener(
+            'pointerup',
+            function () {
+              drag = null;
+            },
+            { passive: true },
+          );
+          stage.addEventListener(
+            'pointercancel',
+            function () {
+              drag = null;
+            },
+            { passive: true },
+          );
+
+          stageCanvas.addEventListener('webglcontextlost', function (event) {
+            event.preventDefault();
+            failStage(
+              'The graphics context was lost. Reload the page to bring the 3D bike back. The booking form still works.',
+            );
+          });
+
+          /* -------- first frame, then reveal -------- */
+          renderFrame(0);
+          setLoadTarget(100);
+          view.running = true;
+          requestAnimationFrame(animate);
+        }
+
+        function resizeStage() {
+          if (!renderer || !camera) return;
+          const width = Math.max(1, stage.clientWidth);
+          const height = Math.max(1, stage.clientHeight);
+          renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+          renderer.setSize(width, height, false);
+          camera.aspect = width / height;
+          camera.updateProjectionMatrix();
+        }
+
+        /* ================================================================
+           9. BIKE BUILDER — every part is a Three.js primitive.
+           Local axes: +X is forward, +Y is up, +Z is the side.
+           ================================================================ */
+        function tubeBetween(a, b, radius, material, segments) {
+          const start = new THREE.Vector3(a[0], a[1], a[2]);
+          const end = new THREE.Vector3(b[0], b[1], b[2]);
+          const direction = new THREE.Vector3().subVectors(end, start);
+          const length = direction.length();
+          const mesh = new THREE.Mesh(
+            new THREE.CylinderGeometry(radius, radius, length, segments || 10, 1),
+            material,
+          );
+          mesh.position.copy(start).addScaledVector(direction, 0.5);
+          mesh.quaternion.setFromUnitVectors(
+            new THREE.Vector3(0, 1, 0),
+            direction.normalize(),
+          );
+          return mesh;
+        }
+
+        function makeDecalTexture() {
+          const canvas = document.createElement('canvas');
+          canvas.width = 512;
+          canvas.height = 128;
+          const ctx = canvas.getContext('2d');
+          ctx.clearRect(0, 0, 512, 128);
+          ctx.fillStyle = '#ffd400';
+          ctx.font = '700 58px "Arial Black", Impact, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('FRESCA', 256, 68);
+          const texture = new THREE.CanvasTexture(canvas);
+          texture.encoding = THREE.sRGBEncoding;
+          texture.anisotropy = 4;
+          return texture;
+        }
+
+        function buildBike() {
+          const R = 0.36;
+          const root = new THREE.Group();
+
+          /* -------- materials (MeshStandardMaterial + real lights) -------- */
+          const frameMat = new THREE.MeshStandardMaterial({
+            color: 0xffc800,
+            roughness: 0.34,
+            metalness: 0.3,
+            envMapIntensity: 0.75,
+          });
+          const chromeMat = new THREE.MeshStandardMaterial({
+            color: 0xe9e9e3,
+            roughness: 0.16,
+            metalness: 1,
+            envMapIntensity: 1.15,
+          });
+          const tireMat = new THREE.MeshStandardMaterial({
+            color: 0x050505,
+            roughness: 0.96,
+            metalness: 0,
+            envMapIntensity: 0.15,
+          });
+          const darkMat = new THREE.MeshStandardMaterial({
+            color: 0x141414,
+            roughness: 0.55,
+            metalness: 0.35,
+            envMapIntensity: 0.4,
+          });
+          const seatMat = new THREE.MeshStandardMaterial({
+            color: 0x0a0a0a,
+            roughness: 0.72,
+            metalness: 0.05,
+            envMapIntensity: 0.3,
+          });
+          const screenMat = new THREE.MeshStandardMaterial({
+            color: 0xffd400,
+            emissive: 0x7a5f00,
+            emissiveIntensity: 0.8,
+            roughness: 0.35,
+            metalness: 0.2,
+          });
+
+          /* -------- key frame points -------- */
+          const rearAxle = new THREE.Vector3(-0.56, R, 0);
+          const frontAxle = new THREE.Vector3(0.56, R, 0);
+          const bottomBracket = new THREE.Vector3(-0.07, 0.3, 0);
+          const seatTop = new THREE.Vector3(-0.245, 0.76, 0);
+          const headTop = new THREE.Vector3(0.4, 0.8, 0);
+          const headLow = new THREE.Vector3(0.35, 0.55, 0);
+
+          /* -------- frame triangle -------- */
+          const frame = new THREE.Group();
+          frame.add(tubeBetween(seatTop.toArray(), headTop.toArray(), 0.027, frameMat));
+          frame.add(
+            tubeBetween(bottomBracket.toArray(), headLow.toArray(), 0.032, frameMat),
+          );
+          frame.add(
+            tubeBetween(bottomBracket.toArray(), seatTop.toArray(), 0.026, frameMat),
+          );
+          frame.add(tubeBetween(headLow.toArray(), headTop.toArray(), 0.034, frameMat));
+          root.add(frame);
+
+          /* Rear triangle and fork legs are paired either side of the wheel. */
+          [-0.045, 0.045].forEach(function (z) {
+            frame.add(
+              tubeBetween(
+                [bottomBracket.x, bottomBracket.y, z],
+                [rearAxle.x, rearAxle.y, z],
+                0.014,
+                frameMat,
+              ),
+            );
+            frame.add(
+              tubeBetween(
+                [seatTop.x, seatTop.y, z * 0.8],
+                [rearAxle.x, rearAxle.y, z],
+                0.012,
+                frameMat,
+              ),
+            );
+            frame.add(
+              tubeBetween(
+                [headLow.x, headLow.y, z * 1.15],
+                [frontAxle.x, frontAxle.y, z],
+                0.018,
+                chromeMat,
+              ),
+            );
+          });
+
+          /* Fork crown. */
+          const crown = new THREE.Mesh(
+            new THREE.BoxGeometry(0.09, 0.04, 0.15),
+            chromeMat,
+          );
+          crown.position.set(headLow.x, headLow.y - 0.01, 0);
+          frame.add(crown);
+
+          /* -------- seat post + saddle -------- */
+          frame.add(
+            tubeBetween(
+              [seatTop.x, seatTop.y, 0],
+              [-0.255, 0.815, 0],
+              0.017,
+              chromeMat,
+            ),
+          );
+
+          const saddle = new THREE.Group();
+          const saddleMain = new THREE.Mesh(
+            new THREE.BoxGeometry(0.3, 0.055, 0.15),
+            seatMat,
+          );
+          saddleMain.position.set(-0.27, 0.84, 0);
+          const saddleNose = new THREE.Mesh(
+            new THREE.BoxGeometry(0.14, 0.045, 0.1),
+            seatMat,
+          );
+          saddleNose.position.set(-0.09, 0.842, 0);
+          saddle.add(saddleMain, saddleNose);
+          root.add(saddle);
+
+          /* -------- handlebar group (morphs width + rise) -------- */
+          const barGroup = new THREE.Group();
+          barGroup.position.set(0.41, 0.96, 0);
+          root.add(barGroup);
+
+          /* The stem is a child so it stays connected when the bar rises. */
+          barGroup.add(tubeBetween([0, -0.31, 0], [0, 0, 0], 0.021, chromeMat));
+
+          const bar = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.016, 0.016, 1, 10),
+            chromeMat,
+          );
+          bar.rotation.x = Math.PI / 2; /* length now runs along Z */
+          barGroup.add(bar);
+
+          const gripGeometry = new THREE.CylinderGeometry(0.024, 0.024, 0.14, 10);
+          function makeGrip(z) {
+            const grip = new THREE.Mesh(gripGeometry, seatMat);
+            grip.rotation.x = Math.PI / 2;
+            grip.position.set(-0.012, 0, z);
+            return grip;
+          }
+          const gripL = makeGrip(-0.18);
+          const gripR = makeGrip(0.18);
+          barGroup.add(gripL, gripR);
+
+          const bell = new THREE.Mesh(
+            new THREE.SphereGeometry(0.027, 10, 8),
+            chromeMat,
+          );
+          bell.position.set(0.005, 0.03, 0.13);
+          barGroup.add(bell);
+
+          /* Small TFT-style display; only visible on the electric bike. */
+          const display = new THREE.Group();
+          const displayBox = new THREE.Mesh(
+            new THREE.BoxGeometry(0.1, 0.036, 0.07),
+            darkMat,
+          );
+          const displayScreen = new THREE.Mesh(
+            new THREE.PlaneGeometry(0.08, 0.026),
+            screenMat,
+          );
+          displayScreen.rotation.x = -Math.PI / 2;
+          displayScreen.position.y = 0.019;
+          display.add(displayBox, displayScreen);
+          display.position.set(0.005, 0.028, 0);
+          barGroup.add(display);
+
+          /* -------- battery box (electric only) -------- */
+          const battery = new THREE.Group();
+          battery.position.set(0.14, 0.425, 0);
+          battery.rotation.z = 0.545; /* aligned with the down tube */
+          const batteryBox = new THREE.Mesh(
+            new THREE.BoxGeometry(0.46, 0.15, 0.16),
+            darkMat,
+          );
+          battery.add(batteryBox);
+
+          const decalMaterial = new THREE.MeshStandardMaterial({
+            map: makeDecalTexture(),
+            transparent: true,
+            roughness: 0.5,
+            metalness: 0.2,
+            depthWrite: false,
+          });
+          const decal = new THREE.Mesh(
+            new THREE.PlaneGeometry(0.3, 0.075),
+            decalMaterial,
+          );
+          decal.position.z = 0.081;
+          const decalBack = decal.clone();
+          decalBack.position.z = -0.081;
+          decalBack.rotation.y = Math.PI;
+          battery.add(decal, decalBack);
+          root.add(battery);
+
+          /* -------- cranks, pedals and chain -------- */
+          const crank = new THREE.Group();
+          crank.position.copy(bottomBracket);
+          root.add(crank);
+
+          const chainring = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.098, 0.098, 0.012, 28),
+            chromeMat,
+          );
+          chainring.rotation.x = Math.PI / 2;
+          chainring.position.z = 0.055;
+          crank.add(chainring);
+
+          const armGeometry = new THREE.BoxGeometry(0.026, 0.17, 0.02);
+          const armA = new THREE.Mesh(armGeometry, chromeMat);
+          armA.position.set(0, -0.085, 0.072);
+          const armB = new THREE.Mesh(armGeometry, chromeMat);
+          armB.position.set(0, 0.085, -0.072);
+          crank.add(armA, armB);
+
+          const pedalGeometry = new THREE.BoxGeometry(0.1, 0.022, 0.055);
+          const pedalA = new THREE.Mesh(pedalGeometry, seatMat);
+          pedalA.position.set(0, -0.17, 0.072);
+          const pedalB = new THREE.Mesh(pedalGeometry, seatMat);
+          pedalB.position.set(0, 0.17, -0.072);
+          crank.add(pedalA, pedalB);
+
+          const chainMat = new THREE.MeshStandardMaterial({
+            color: 0x3a3a3a,
+            roughness: 0.55,
+            metalness: 0.9,
+          });
+          root.add(
+            tubeBetween(
+              [bottomBracket.x, bottomBracket.y + 0.095, 0.055],
+              [rearAxle.x, rearAxle.y + 0.045, 0.055],
+              0.0055,
+              chainMat,
+              4,
+            ),
+          );
+          root.add(
+            tubeBetween(
+              [bottomBracket.x, bottomBracket.y - 0.095, 0.055],
+              [rearAxle.x, rearAxle.y - 0.045, 0.055],
+              0.0055,
+              chainMat,
+              4,
+            ),
+          );
+
+          /* -------- wheels -------- */
+          function buildWheel(radius) {
+            const wheel = new THREE.Group();
+
+            const tire = new THREE.Mesh(
+              new THREE.TorusGeometry(radius, 0.042, 10, 40),
+              tireMat,
+            );
+            wheel.add(tire);
+
+            const rim = new THREE.Mesh(
+              new THREE.TorusGeometry(radius * 0.79, 0.012, 8, 36),
+              chromeMat,
+            );
+            wheel.add(rim);
+
+            const hub = new THREE.Mesh(
+              new THREE.CylinderGeometry(
+                radius * 0.09,
+                radius * 0.09,
+                0.14,
+                10,
+              ),
+              chromeMat,
+            );
+            hub.rotation.x = Math.PI / 2;
+            wheel.add(hub);
+
+            for (let i = 0; i < 10; i += 1) {
+              const angle = (i / 10) * Math.PI * 2;
+              wheel.add(
+                tubeBetween(
+                  [0, 0, 0],
+                  [
+                    Math.cos(angle) * radius * 0.78,
+                    Math.sin(angle) * radius * 0.78,
+                    0,
+                  ],
+                  0.0045,
+                  chromeMat,
+                  4,
+                ),
+              );
+            }
+
+            return wheel;
+          }
+
+          /* The steering group sits at the front axle so a small yaw reads as
+             steering without moving the whole frame. */
+          const frontSteer = new THREE.Group();
+          frontSteer.position.copy(frontAxle);
+          const frontSpin = buildWheel(R);
+          frontSteer.add(frontSpin);
+          root.add(frontSteer);
+
+          const rearSpin = buildWheel(R);
+          rearSpin.position.copy(rearAxle);
+          root.add(rearSpin);
+
+          /* -------- shadows -------- */
+          root.traverse(function (object) {
+            if (object.isMesh) {
+              object.castShadow = true;
+              object.receiveShadow = true;
+            }
+          });
+          decal.castShadow = false;
+          decalBack.castShadow = false;
+          displayScreen.castShadow = false;
+
+          const initial = BIKES[currentType] || BIKES.city;
+          const morph = {
+            wheel: initial.wheel,
+            barWidth: initial.barWidth,
+            barRise: initial.barRise,
+            battery: initial.battery,
+            steer: RIGS.hero.steer,
+          };
+
+          return {
+            root: root,
+            R: R,
+            frontSteer: frontSteer,
+            frontSpin: frontSpin,
+            rearSpin: rearSpin,
+            crank: crank,
+            pedals: [pedalA, pedalB],
+            barGroup: barGroup,
+            bar: bar,
+            gripL: gripL,
+            gripR: gripR,
+            battery: battery,
+            display: display,
+            morph: morph,
+            target: initial,
+          };
+        }
+
+        /* ================================================================
+           10. ANIMATION LOOP — spin, bob, morph, pointer tilt, scroll rig
+           ================================================================ */
+        const rigSections = $$('[data-rig]');
+        let rigCheckedAt = 0;
+
+        function updateActiveRig() {
+          const focus = window.innerHeight * 0.42;
+          let best = 'hero';
+          let bestDistance = Infinity;
+
+          rigSections.forEach(function (section) {
+            const rect = section.getBoundingClientRect();
+            const distance = Math.abs((rect.top + rect.bottom) / 2 - focus);
+            if (distance < bestDistance) {
+              bestDistance = distance;
+              best = section.getAttribute('data-rig');
+            }
+          });
+
+          if (best && RIGS[best]) view.activeRig = best;
+        }
+
+        /* The bike must fit the stage on every screen shape. This computes
+           the smallest distance that keeps it inside a safe frame, then the
+           section rig scales that base distance for its own composition. */
+        const FRAME = { halfW: 0.98, halfH: 0.6, width: 0.93, height: 0.55 };
+
+        function framingDistance() {
+          const vFov = (camera.fov * Math.PI) / 180;
+          const aspect = camera.aspect || 1;
+          const hFov = 2 * Math.atan(Math.tan(vFov / 2) * aspect);
+          const byWidth = FRAME.halfW / (Math.tan(hFov / 2) * FRAME.width);
+          const byHeight = FRAME.halfH / (Math.tan(vFov / 2) * FRAME.height);
+          return Math.max(byWidth, byHeight);
+        }
+
+        function updateCamera(dt) {
+          const rig = RIGS[view.activeRig] || RIGS.hero;
+          const px = reducedMotion ? 0 : view.pointer.x;
+          const py = reducedMotion ? 0 : view.pointer.y;
+
+          const targets = {
+            az: rig.az + px * 0.17,
+            el: rig.el - py * 0.09,
+            dist: rig.dist,
+            yaw: rig.yaw + px * 0.1,
+            steer: rig.steer + px * 0.06,
+            look: rig.look,
+            pan: rig.pan,
+          };
+
+          const k = reducedMotion ? 1 : dt > 0 ? 1 - Math.exp(-4.2 * dt) : 1;
+          view.current.az += (targets.az - view.current.az) * k;
+          view.current.el += (targets.el - view.current.el) * k;
+          view.current.dist += (targets.dist - view.current.dist) * k;
+          view.current.yaw += (targets.yaw - view.current.yaw) * k;
+          view.current.steer += (targets.steer - view.current.steer) * k;
+          view.current.look += (targets.look - view.current.look) * k;
+          view.current.pan += (targets.pan - view.current.pan) * k;
+
+          /* The rig `dist` is relative to the auto-fit distance. */
+          const distance =
+            framingDistance() * (view.current.dist / 3.35);
+          const cosEl = Math.cos(view.current.el);
+
+          /* Slide both the camera and its aim sideways so the perspective
+             does not push the bike against one edge of the stage. */
+          const panX = Math.cos(view.current.az) * view.current.pan;
+          const panZ = -Math.sin(view.current.az) * view.current.pan;
+
+          camera.position.set(
+            panX + Math.sin(view.current.az) * cosEl * distance,
+            view.current.look + Math.sin(view.current.el) * distance,
+            panZ + Math.cos(view.current.az) * cosEl * distance,
+          );
+          camera.lookAt(panX, view.current.look, panZ);
+        }
+
+        function updateMorph(dt) {
+          if (!bike) return;
+          const morph = bike.morph;
+          const target = bike.target || BIKES.city;
+          const k = dt > 0 ? 1 - Math.exp(-6.5 * dt) : 1;
+
+          morph.wheel += (target.wheel - morph.wheel) * k;
+          morph.barWidth += (target.barWidth - morph.barWidth) * k;
+          morph.barRise += (target.barRise - morph.barRise) * k;
+          morph.battery += (target.battery - morph.battery) * k;
+
+          const R = bike.R;
+          bike.frontSteer.position.y = R * morph.wheel;
+          bike.rearSpin.position.y = R * morph.wheel;
+          bike.frontSpin.scale.setScalar(morph.wheel);
+          bike.rearSpin.scale.setScalar(morph.wheel);
+
+          bike.bar.scale.y = morph.barWidth;
+          bike.gripL.position.z = -(morph.barWidth / 2 - 0.07);
+          bike.gripR.position.z = morph.barWidth / 2 - 0.07;
+          bike.barGroup.position.y = 0.96 + morph.barRise;
+
+          const batteryScale = Math.max(0.001, morph.battery);
+          bike.battery.scale.setScalar(batteryScale);
+          bike.battery.visible = morph.battery > 0.02;
+          bike.display.visible = morph.battery > 0.4;
+          bike.display.scale.setScalar(morph.battery > 0.4 ? 1 : 0.001);
+        }
+
+        function updatePose(time) {
+          const motion = reducedMotion ? 0 : 1;
+          const bob = Math.abs(Math.sin(time * 2.2)) * 0.012 * motion;
+
+          bikeRoot.position.y = bob;
+          bikeRoot.rotation.y = view.current.yaw;
+          bikeRoot.rotation.z =
+            -view.pointer.x * 0.06 + Math.sin(time * 1.35) * 0.01 * motion;
+          bikeRoot.rotation.x = view.pointer.y * 0.03;
+          bike.frontSteer.rotation.y = view.current.steer;
+        }
+
+        function animate(now) {
+          if (!view.running) return;
+          requestAnimationFrame(animate);
+          if (document.hidden) {
+            view.lastTime = now;
+            return;
+          }
+
+          const dt = clamp((now - view.lastTime) / 1000 || 1 / 60, 0, 0.05);
+          view.lastTime = now;
+          const time = (now - view.startedAt) / 1000;
+
+          /* Scroll speed adds a burst to the wheel spin and road. */
+          const scrollY = window.scrollY || 0;
+          const delta = Math.abs(scrollY - view.lastScroll);
+          view.lastScroll = scrollY;
+          view.boost += delta * 0.05;
+          view.boost *= Math.pow(0.2, dt);
+          view.boost = clamp(view.boost, 0, 8);
+
+          /* Pointer and touch tilt are smoothed separately from the camera. */
+          view.pointer.x = damp(view.pointer.x, view.pointerTarget.x, 7, dt);
+          view.pointer.y = damp(view.pointer.y, view.pointerTarget.y, 7, dt);
+
+          const motion = reducedMotion ? 0 : 1;
+          const spinSpeed = (5.4 + view.boost * 1.5) * motion;
+
+          view.spin -= spinSpeed * dt;
+          bike.frontSpin.rotation.z = view.spin;
+          bike.rearSpin.rotation.z = view.spin;
+
+          /* Pedals turn slower than the wheels, as they would on a real bike. */
+          bike.crank.rotation.z = view.spin * 0.42;
+          bike.pedals[0].rotation.z = -bike.crank.rotation.z;
+          bike.pedals[1].rotation.z = -bike.crank.rotation.z;
+
+          if (roadMap) {
+            roadMap.offset.x += (0.55 + view.boost * 0.16) * dt * motion;
+          }
+
+          if (now - rigCheckedAt > 140) {
+            rigCheckedAt = now;
+            updateActiveRig();
+          }
+
+          updateMorph(dt);
+          updateCamera(dt);
+          updatePose(time);
+          renderer.render(scene, camera);
+
+          if (now - view.speedShownAt > 220) {
+            view.speedShownAt = now;
+            stageSpeed.textContent = Math.round(10 + view.boost * 9) + ' km/h';
+          }
+        }
+
+        function renderFrame(dt) {
+          if (!renderer || !scene || !camera) return;
+          updateCamera(dt || 0);
+          renderer.render(scene, camera);
+        }
+
+        /* ================================================================
+           11. BOOT
+           ================================================================ */
+        try {
+          initStage();
+        } catch (error) {
+          console.error('[FRESCA] Stage boot failed.', error);
+          failStage(
+            'The 3D stage could not start. The fleet, prices and booking form still work.',
+          );
+        }
+      })();
+    </script>
+  </body>
+</html>

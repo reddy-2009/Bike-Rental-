@@ -1,0 +1,74 @@
+# Render blueprint for fRESCA Bike Rentals.
+#
+# Import this repository at https://dashboard.render.com/blueprints and Render
+# creates the web service, the persistent disk and the health check for you.
+# Only the secrets marked `sync: false` have to be filled in by hand.
+#
+# A paid instance type is required because Render only attaches disks to paid
+# services. The free tier also sleeps after inactivity, which would drop the
+# SQLite writes, the SSE stream and the booking-hold timer.
+
+services:
+  - type: web
+    name: fresca-bike-rentals
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: starter
+    region: singapore
+    healthCheckPath: /api/health
+    autoDeploy: true
+    disk:
+      name: fresca-data
+      mountPath: /data
+      sizeGB: 5
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "8080"
+      - key: HOST
+        value: 0.0.0.0
+      - key: DATABASE_PATH
+        value: /data/fresca.db
+      - key: UPLOAD_DIR
+        value: /data/uploads
+
+      # Generated once by Render and kept stable across deploys.
+      - key: JWT_SECRET
+        generateValue: true
+
+      # Must be set in the dashboard. Production refuses to start with the
+      # development default 9989.
+      - key: ADMIN_ACCESS_PASSWORD
+        sync: false
+      - key: ADMIN_ACCESS_EMAIL
+        value: navaneethreddychagari1005@gmail.com
+
+      # Public HTTPS origin. Render can fill this automatically from
+      # RENDER_EXTERNAL_URL; set it explicitly once you attach a custom domain.
+      - key: PUBLIC_BASE_URL
+        sync: false
+
+      # Supabase mirror (optional). Leave SUPABASE_LEDGER unset to enable it
+      # whenever SUPABASE_DB_URL is present.
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_PUBLISHABLE_KEY
+        sync: false
+      - key: SUPABASE_DB_URL
+        sync: false
+      - key: SUPABASE_LEDGER
+        value: "1"
+
+      # PhonePe. Leave empty to keep the gateway disabled until the merchant
+      # account is live; production never falls back to the simulator.
+      - key: PHONEPE_CLIENT_ID
+        sync: false
+      - key: PHONEPE_CLIENT_SECRET
+        sync: false
+      - key: PHONEPE_ENV
+        sync: false
+      - key: PHONEPE_WEBHOOK_USER
+        sync: false
+      - key: PHONEPE_WEBHOOK_PASSWORD
+        sync: false
