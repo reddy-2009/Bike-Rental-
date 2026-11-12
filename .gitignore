@@ -41,3 +41,6 @@ supabase/functions/.env
 supabase/functions/.env.*
 !supabase/functions/.env.example
 supabase/.env
+
+# Netlify publish output (generated)
+public/

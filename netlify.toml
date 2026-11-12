@@ -1,0 +1,10 @@
+# The backend/, frontend/, scripts/ and prisma/ sources are not in this
+# repository yet, so the Prisma postinstall hook cannot run on Netlify.
+# Until they are committed, the deploy publishes only the static landing page.
+[build]
+  command = "mkdir -p public && cp fresca-landing.html public/index.html"
+  publish = "public"
+
+[build.environment]
+  # Skip lifecycle scripts (postinstall -> scripts/require-prisma-schema.mjs).
+  NPM_FLAGS = "--ignore-scripts"
