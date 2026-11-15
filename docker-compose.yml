@@ -1,0 +1,40 @@
+# Docker Compose for a VPS such as a ₹500/month Ubuntu box.
+#
+#   docker compose up -d --build
+#
+# Reads production values from `.env` in this folder. The database and the
+# uploaded images stay in the `fresca-data` volume, so recreating the container
+# never loses bookings or payments.
+
+services:
+  app:
+    build: .
+    image: fresca-bike-rentals:latest
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: "8080"
+      DATABASE_PATH: /data/fresca.db
+      UPLOAD_DIR: /data/uploads
+    volumes:
+      - fresca-data:/data
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:8080/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      start_period: 25s
+      retries: 3
+
+volumes:
+  fresca-data:

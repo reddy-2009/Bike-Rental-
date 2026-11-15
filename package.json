@@ -1,0 +1,37 @@
+{
+  "name": "fresca-bike-rentals",
+  "version": "1.0.0",
+  "private": true,
+  "description": "fRESCA Bike Rentals - motorcycle rentals in Kadapa and Proddatur.",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "postinstall": "node scripts/require-prisma-schema.mjs && prisma generate",
+    "dev": "node scripts/require-prisma-schema.mjs && prisma generate && concurrently -n api,web -c yellow,cyan \"npm run dev -w backend\" \"npm run dev -w frontend\"",
+    "build": "node scripts/require-prisma-schema.mjs && prisma generate && npm run build -w backend && npm run build -w frontend",
+    "start": "npm run start -w backend",
+    "start:5173": "node scripts/start-5173.mjs",
+    "seed": "npm run seed -w backend",
+    "prisma:generate": "prisma generate",
+    "prisma:validate": "prisma validate",
+    "prisma:tunnel": "node scripts/prisma-tunnel.mjs",
+    "prisma:execute": "node scripts/prisma-cli.mjs db execute",
+    "prisma:ping": "node scripts/prisma-cli.mjs db execute --file prisma/ping.sql",
+    "prisma:pull": "node scripts/prisma-cli.mjs db pull",
+    "prisma:migrate": "node scripts/prisma-cli.mjs migrate dev",
+    "prisma:studio": "node scripts/prisma-cli.mjs studio",
+    "typecheck": "node scripts/require-prisma-schema.mjs && prisma generate && npm run typecheck -w backend && npm run typecheck -w frontend",
+    "test": "node scripts/require-prisma-schema.mjs && prisma generate && npm run test -w backend",
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0",
+    "concurrently": "^9.1.2",
+    "prisma": "7.10.1"
+  },
+  "engines": {
+    "node": ">=22.5.0"
+  }
+}
