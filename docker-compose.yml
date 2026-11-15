@@ -16,11 +16,7 @@ services:
     env_file:
       - .env
     environment:
-      NODE_ENV: production
-      HOST: 0.0.0.0
-      PORT: "8080"
-      DATABASE_PATH: /data/fresca.db
-      UPLOAD_DIR: /data/uploads
+   
     volumes:
       - fresca-data:/data
     healthcheck:
@@ -29,9 +25,7 @@ services:
           "CMD",
           "node",
           "-e",
-          "fetch('http://127.0.0.1:8080/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
-        ]
-      interval: 30s
+          "fet]
       timeout: 5s
       start_period: 25s
       retries: 3
