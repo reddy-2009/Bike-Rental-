@@ -17,8 +17,7 @@ FROM node:22-bookworm-slim AS build
 WORKDIR /app
 
 # Playwright browsers are only needed for local end-to-end tests.
-ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
-ENV npm_config_cache=/tmp/npm-cache
+
 
 # Prisma's postinstall runs before the rest of the source is copied, so the
 # schema, its config file and the postinstall guard have to be present first.
@@ -37,11 +36,6 @@ COPY frontend ./frontend
 # Railway exposes service variables to matching build arguments. When they are
 # absent the SPA simply hides email sign-in instead of failing to boot.
 ARG VITE_SUPABASE_URL
-ARG VITE_SUPABASE_PUBLISHABLE_KEY
-ARG VITE_SUPABASE_CAPTCHA_SITE_KEY
-ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL \
-    VITE_SUPABASE_PUBLISHABLE_KEY=$VITE_SUPABASE_PUBLISHABLE_KEY \
-    VITE_SUPABASE_CAPTCHA_SITE_KEY=$VITE_SUPABASE_CAPTCHA_SITE_KEY
 
 # Generates Prisma Client, compiles the API and builds the SPA.
 RUN npm run build
