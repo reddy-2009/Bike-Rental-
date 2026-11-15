@@ -62,14 +62,3 @@ Run on 2026-11-14 on Windows with Node.js 22.14.0. Only results actually observe
 - Password recovery is not self-service. A forgotten password must be reset by an operator with database access.
 - The Kadapa studio near New Bus Stand and the Proddatur branch at One Town Police Station are set. Phone number, opening hours (9:00 am to 8:00 pm, all seven days) and the refundable ₹2,000 security deposit are stored in `backend/src/lib/business-facts.ts`.
 
-## Run everything
-
-```bash
-npm install
-npm run typecheck
-npm test
-npm run build
-npx playwright install chromium
-npm run dev
-npm run test:e2e
-```
