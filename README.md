@@ -178,10 +178,6 @@ cp frontend/.env.example frontend/.env
 Set the project URL, **publishable** key and Turnstile site key:
 
 ```dotenv
-VITE_SUPABASE_URL=https://<project-ref>.supabase.co
-VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
-VITE_SUPABASE_CAPTCHA_SITE_KEY=0x4AAAAAAA...
-```
 
 Load the client with `getSupabase()` rather than importing it at the top level:
 
@@ -198,19 +194,10 @@ Only `VITE_` variables reach the browser. Never put a secret, `service_role` or 
 
 ### Supabase on the backend
 
-`@supabase/server` is installed in the backend for routes that need to verify Supabase users or query Supabase directly. Add the project values to the root `.env`:
+`@supabase/server` is installed in the backend for routes that need to verify Supabase users or query Supabase directly. Add the project values to the root 
 
-```dotenv
-SUPABASE_URL=https://<project-ref>.supabase.co
-SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
-SUPABASE_SECRET_KEY=sb_secret_...
-SUPABASE_JWKS_URL=https://<project-ref>.supabase.co/auth/v1/.well-known/jwks.json
-SUPABASE_DB_URL=postgresql://postgres:<password>@db.<project-ref>.supabase.co:5432/postgres?sslmode=require
-```
 
-`SUPABASE_SECRET_KEY` bypasses Row Level Security. Keep it in the server environment only. If it is missing, `supabaseAdmin()` reports `MISSING_DEFAULT_SECRET_KEY` instead of silently falling back to a weaker key. No current route calls `supabaseAdmin()`, so the key is optional and is removed from `.env` by default. To rotate it, create a new secret key in the Supabase dashboard under Project Settings > API Keys, replace the value, and revoke the old key there. Removing the value locally does not invalidate a leaked key; only revoking it in the dashboard does.
 
-`SUPABASE_DB_URL` is the direct Postgres connection used by `@supabase/server`'s Postgres middleware, which needs `pg` (already installed). Percent-encode special characters in the password before adding it, for example `@` becomes `%40` and `#` becomes `%23`. The direct host `db.<project-ref>.supabase.co` resolves to IPv6 only, so networks without IPv6 should use the Supabase pooler connection string instead (Project Settings > Database > Connection string).
 
 Helpers live in `backend/src/lib/supabase.ts`:
 
@@ -250,20 +237,13 @@ Prisma 7 is installed at the repository root with the `prisma-client` generator.
 
 Add both URLs to the root `.env`. `DATABASE_URL` is the transaction pooler used by the app, and `DIRECT_URL` is the session pooler used by CLI commands:
 
-```dotenv
-DATABASE_URL="postgresql://postgres.<project-ref>:<password>@aws-0-<region>.pooler.supabase.com:6543/postgres?pgbouncer=true"
-DIRECT_URL="postgresql://postgres.<project-ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres"
-```
+
+
 
 Percent-encode special characters in the password. Use the exact pooler host from Supabase Dashboard > Connect. The direct host `db.<project-ref>.supabase.co` is IPv6 only, so IPv4 networks need the session pooler.
 
 ```bash
-npm run prisma:validate   # schema syntax
-npm run prisma:generate   # regenerate backend/src/generated/prisma
-npm run prisma:pull       # introspect existing tables into the schema
-npm run prisma:migrate    # create and apply a migration
-npm run prisma:studio     # browse the database
-npm run prisma:ping       # select 1, to confirm credentials
+
 ```
 
 Prisma 7.10 declares Node `^22.18.0 || ^24.11.0 || >=26.0.0`. The commands work on the current Node 22.14 install, but move to a supported release for long-term use.
@@ -287,35 +267,6 @@ The hosted Supabase project has the full fRESCA schema applied: 15 tables, 44 in
 - Tables are owned by the server-only `prisma` role, which has `BYPASSRLS`. `anon` and `authenticated` have no table privileges and no policies, so the Data API cannot read or write these tables. `postgres` and `service_role` keep DML access for the dashboard and server-side tooling.
 - Add explicit policies in a later migration before the SPA reads Supabase directly.
 
-#### Supabase mirror ledger
-
-SQLite remains the source of truth. When `SUPABASE_DB_URL` is present, the API mirrors the five related tables (`users`, `bikes`, `bookings`, `payments`, `refunds`) into Supabase so the real payment ledger is available there.
-
-- `backend/src/lib/supabase-ledger.ts` uses a small `pg` pool and verifies the pooler with the project CA at `prisma/supabase-ca.crt` (override with `SUPABASE_CA_PATH`).
-- A full reconcile runs at startup and every 60 seconds. Every booking, payment, refund, user and bike change also queues the affected row immediately.
-- Rows are upserted by their local `id` in foreign-key order. Identity sequences are repaired after each batch, so a future Postgres insert cannot collide with a mirrored id.
-- The mirror is fail-open and non-blocking. A network error, paused project or rotated password logs at most one warning per minute and retries with backoff. Booking, payment, refund and auth responses are never delayed or failed because of it.
-- A row that is missing locally is deleted from the mirror. Deletes that would break a foreign key are skipped and retried on the next reconcile.
-- The `users` copy includes `password_hash`, so treat the database URL and the `prisma` role password as production secrets. The table keeps RLS enabled with no policies, and `anon` and `authenticated` have no privileges.
-- Set `SUPABASE_LEDGER=0` to turn the mirror off. It never runs in tests, because the test server loads the app without starting the ledger.
-
-Supabase CLI v3 is local by default. To target the hosted project, pass `--remote` and `--yes`:
-
-```powershell
-$env:SUPABASE_DB_URL = "postgresql://prisma.<project-ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres"
-npx supabase migration new add_feature
-npx supabase db push --remote="$env:SUPABASE_DB_URL" --yes
-npx supabase migration list --remote="$env:SUPABASE_DB_URL"
-```
-
-`supabase db push` records applied versions in `supabase_migrations.schema_migrations`. Creating that schema needs `CREATE` on the database, which the `prisma` role does not have. Run this once in the Supabase SQL editor as the project owner, then push again:
-
-```sql
-create schema if not exists supabase_migrations;
-grant usage, create on schema supabase_migrations to prisma;
-```
-
-If the migration was applied directly before its history row existed, re-running the idempotent file is safe. `npx supabase link --project-ref <ref>` and `npx supabase login` are only needed for dashboard-backed commands; a `--remote` database URL works without them.
 
 ### Open it on your phone (same Wi-Fi)
 
@@ -360,21 +311,18 @@ cp .env.example .env
 | `HOST`                      | `0.0.0.0`                | Bind address. `0.0.0.0` allows phones on the local network; `127.0.0.1` restricts to this laptop |
 | `NODE_ENV`                  | `development`            | `production` enables secure cookies and quieter errors                  |
 | `JWT_SECRET`                | development fallback     | **Required in production**: unique, 32+ characters; also signs payment tokens |
-| `ADMIN_ACCESS_PASSWORD`     | `9989`                   | **Required in production**: server-side admin dashboard password, hashed into SQLite on startup |
+| `ADMIN_ACCESS_PASSWORD`     | none                         | **Required in production**: server-side admin dashboard password, hashed into SQLite on startup |
 | `ADMIN_ACCESS_EMAIL`        | owner email              | Admin account used when the access gate signs someone in                |
-| `DATABASE_PATH`             | `backend/data/fresca.db` | Override the SQLite file location                                       |
+| `DATABASE_PATH`             |                           | Override the SQLite file location                                       |
 | `SUPABASE_DB_URL`           | none                     | Postgres connection string for the mirror ledger; empty disables it     |
 | `SUPABASE_CA_PATH`          | `prisma/supabase-ca.crt` | CA certificate used to verify the Supabase pooler                       |
 | `SUPABASE_LEDGER`           | `1` when a DB URL is set | `0` disables the Supabase mirror                                       |
 | `SUPABASE_LEDGER_INTERVAL_MS` | `60000`                | Full reconcile interval; values below `15000` are raised to `15000`    |
 | `PUBLIC_BASE_URL`           | request host             | Public HTTPS origin used for gateway return/webhook URLs                |
 | `PAYMENTS_SIMULATOR`        | on outside production    | `1` shows unconfigured gateway simulators; `0` hides them. Forced off in production |
-| `UPI_ID`                    | none                     | Studio UPI ID (`name@bank`). Enables the manual UPI QR + reference method |
-| `UPI_PAYEE_NAME`            | `fRESCA Bike Rentals`    | Payee name shown in the UPI intent and QR                          |
 | `PHONEPE_CLIENT_ID`         | none                     | PhonePe merchant client id (enables live PhonePe)                       |
 | `PHONEPE_CLIENT_SECRET`     | none                     | PhonePe merchant client secret                                          |
 | `PHONEPE_CLIENT_VERSION`    | `1`                      | PhonePe OAuth client version                                            |
-| `PHONEPE_ENV`               | `sandbox`                | `production` switches to the live PhonePe hosts                          |
 | `PHONEPE_WEBHOOK_USER`      | none                     | SHA webhook user for `/api/payments/webhook/phonepe`                    |
 | `PHONEPE_WEBHOOK_PASSWORD`  | none                     | SHA webhook password for the PhonePe webhook                            |
 | `PHONEPE_REFUND_URL`        | PG v2 default            | Optional override for the PhonePe refund endpoint                       |
@@ -395,10 +343,6 @@ Shell variables take priority over values in the file. The backend looks for `.e
 There are no public sample logins. The database creates one administrator row for `ADMIN_ACCESS_EMAIL` at seed time with a random password that is never printed. Administrators use the **Admin access** button on the sign-in page: enter the server-side `ADMIN_ACCESS_PASSWORD` and the API opens `/admin`.
 
 The Admin Access gate is a second factor: any admin route and every `/api/admin/*` request also requires the verified `adminUnlocked` session. Wrong passwords return `Incorrect password. Please try again.` after server-side verification, and five failures per IP in 15 minutes are throttled. **Log out** clears the HTTP-only cookie. Change the gate password with `ADMIN_ACCESS_PASSWORD`; it is stored only as a scrypt hash.
-
-Outside production, the test card checkout accepts any future expiry and CVC with the card **4242 4242 4242 4242**. No real charge is made and no card data is stored; the card form is disabled entirely when `NODE_ENV=production`. PhonePe and Paytm appear in the same checkout: with merchant keys present they open the real gateway; without keys they open the built-in simulator, where you can approve or decline a payment.
-
----
 
 ## Rider requirements
 
@@ -438,26 +382,7 @@ The storefront opens after sign-in: Home, the fleet, bike details, About Us and 
 | `/admin/offers`          | Admin + gate    | Coupon management                                        |
 | anything else            | Public          | Designed not-found page                                  |
 
-Role-protected routes redirect unauthenticated visitors to `/login` and send signed-in users to the correct dashboard for their role. The server redirects signed-out requests for `/`, `/bikes`, `/bikes/:slug`, `/about`, `/contact`, `/account`, `/dashboard`, `/staff`, `/admin` and `/pay` before it serves the app shell, and it refuses to serve `/staff` to customers or `/admin` to non-admin accounts, so a deep link or a cached page cannot bypass the guard. Home, the fleet, bike details, About Us and Contact Us require a session; only sign-in, registration and the legal pages are public. HTML is served with `Cache-Control: no-store`.
-
----
-
-## Scripts
-
-Run from the repository root:
-
-| Command                              | What it does                                                            |
-| ------------------------------------ | ----------------------------------------------------------------------- |
-| `npm run dev`                        | Start API (watch mode) and Vite dev server together                     |
-| `npm run build`                      | Type-check and build the backend, then the frontend                     |
-| `npm start`                          | Serve the built SPA and API from Express on port 4000                   |
-| `npm run typecheck`                  | Type-check both workspaces without emitting files                       |
-| `npm test`                           | Build the backend and run the API and logic test suites                 |
-| `npm run test:e2e`                   | Run the Playwright end-to-end checks                                    |
-| `npm run seed`                       | Seed the fleet and administrator if the database is empty               |
-| `npm run seed -w backend -- --force` | Reset and reseed the database (destroys local data)                     |
-
----
+Role-protected routes redirect unauthenticated visitors to `/login` and send signed-in users to the correct dashboard for their role. The server redirects signed-out requests for `/`, `/bikes`, `/bikes/:slug`, `/about`, `/contact`, `/account`, `/dashboard`, `/staff`, `/admin` and `/pay` before it serves the app shell, and it refuses to serve `/staff` to customers or `/admin` to non-admin accounts, so a deep link or a cached page cannot bypass the guard. Home, the fleet, bike details, About Us and Contact Us require a session; only sign-in, registration and the legal pages are public. HTML is served with `Cache-Control: no-store`
 
 ## Booking and pricing rules
 
@@ -519,21 +444,6 @@ Checkout offers the methods that are actually configured. The amount is always r
 
 **Ledger mirror.** Every payment and refund row, plus its booking, rider and bike parents, is mirrored into Supabase by `backend/src/lib/supabase-ledger.ts`. SQLite stays authoritative: a Supabase outage never blocks checkout, capture, cancellation or refund. See [Supabase mirror ledger](#supabase-mirror-ledger).
 
-**Going live with real money.**
-
-1. Set `PUBLIC_BASE_URL` to the exact public HTTPS origin, for example `https://fresca.example.com`. Production gateways refuse to start checkout without a reachable HTTPS origin.
-2. Add `PHONEPE_CLIENT_ID` and `PHONEPE_CLIENT_SECRET` (plus `PHONEPE_ENV=production`) and/or `PAYTM_MID` and `PAYTM_MERCHANT_KEY` (plus `PAYTM_ENV=production`, your live `PAYTM_WEBSITE`, and a 16-byte merchant key).
-3. PhonePe refunds use the PG v2 endpoint by default; set `PHONEPE_REFUND_URL` only if PhonePe gives you a different one. Set `PAYTM_REFUND_URL` for Paytm. Configure `PHONEPE_WEBHOOK_USER` and `PHONEPE_WEBHOOK_PASSWORD` to match the SHA credentials on the PhonePe webhook.
-4. Register these URLs in the merchant dashboards:
-   - PhonePe webhook: `https://<host>/api/payments/webhook/phonepe`
-   - Paytm webhook: `https://<host>/api/payments/webhook/paytm`
-   - PhonePe return: `https://<host>/api/payments/return/phonepe`
-   - Paytm return: `https://<host>/api/payments/return/paytm`
-5. Run in production with `NODE_ENV=production` and leave `PAYMENTS_SIMULATOR` unset or `0`.
-6. Run one small live transaction, confirm the booking moves to `pending_approval` with a provider reference, then issue a test refund.
-
----
-
 ## Live booking updates
 
 `GET /api/events` is a Server-Sent Events stream authenticated by the same `fresca_session` cookie as the rest of the API. One connection per signed-in browser feeds the rider dashboard, My bookings, booking details, the staff desk and the admin booking queue.
@@ -547,24 +457,6 @@ Checkout offers the methods that are actually configured. The amount is always r
 
 ---
 
-## API overview
-
-All responses are JSON under `/api`. Authentication uses the `fresca_session` HTTP-only cookie.
-
-| Area     | Endpoints                                                                                     |
-| -------- | --------------------------------------------------------------------------------------------- |
-| Auth     | `GET /auth/me`, `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `POST /auth/admin-access`, `POST /auth/admin-lock`, `PATCH /auth/profile`, `POST /auth/password`, `PATCH /auth/preferences` |
-| Bikes    | `GET /bikes`, `GET /bikes/filters`, `GET /bikes/:idOrSlug`, `GET /bikes/:idOrSlug/availability` |
-| Bookings | `POST /bookings`, `GET /bookings`, `GET /bookings/:id`, `POST /bookings/:id/cancel`, `PATCH /bookings/:id/status` (staff), `POST /bookings/:id/record-payment` (staff), `POST /bookings/:id/verify-upi` (staff) |
-| Events   | `GET /events` (Server-Sent Events, signed-in users only)                                       |
-| Payments | `GET /payments/methods`, `POST /payments/bookings/:id/checkout`, `POST /payments/bookings/:id/upi`, `POST /payments/upi/:token/submit`, `GET /payments/simulator/:token`, `POST /payments/simulator/:token/complete`, `GET /payments/return/phonepe`, `POST /payments/return/paytm`, `POST /payments/webhook/phonepe`, `POST /payments/webhook/paytm` |
-| Staff    | `GET /staff/overview`, `GET /staff/stats`                                                    |
-| Admin    | `GET /admin/overview`, `GET /admin/stats`, `GET /admin/settings`, `PUT /admin/settings` (service fee), `GET /admin/users`, `PATCH /admin/users/:id/role`, `GET /admin/bikes`, `POST /admin/bikes`, `PATCH /admin/bikes/:id`, `DELETE /admin/bikes/:id`, `GET /admin/bookings`, `GET /admin/bookings/:id`, `POST /admin/bookings/:id/approve`, `POST /admin/bookings/:id/reject`, `GET /admin/refunds`, `POST /admin/refunds/:id/retry`, `POST /admin/refunds/:id/confirm`, `GET /admin/offers`, `POST /admin/offers`, `PATCH /admin/offers/:id`, `DELETE /admin/offers/:id` |
-| Site     | Public `GET /site`; admin `GET /admin/site`, `PUT /admin/site/draft`, `POST /admin/site/publish`, `POST /admin/site/reset`, `POST /admin/site/upload` |
-
-Errors use `{ "error": "message", "details": ... }` with appropriate `4xx` or `5xx` status codes. Invalid input is validated with Zod on the server and mirrored by inline client-side validation.
-
----
 
 ## Website customisation
 
@@ -582,40 +474,6 @@ All settings live in SQLite as versioned JSON. The public endpoint serves only t
 Business facts that must not be guessed live in `backend/src/lib/business-facts.ts`. The Kadapa studio near New Bus Stand and the Proddatur branch at One Town Police Station are set, along with the confirmed phone number, opening hours (9:00 am to 8:00 pm, all seven days) and refundable ₹2,000 security deposit. If a value is ever unconfirmed again, store it starting with `TODO`: those values are hidden from customers instead of being shown as placeholders.
 
 ---
-
-## Production build
-
-```bash
-npm run build
-NODE_ENV=production \
-  JWT_SECRET="<32+ character random value>" \
-  ADMIN_ACCESS_PASSWORD="<strong unique password>" \
-  npm start
-```
-
-On Windows PowerShell:
-
-```powershell
-$env:NODE_ENV = "production"
-$env:JWT_SECRET = "<32+ character random value>"
-$env:ADMIN_ACCESS_PASSWORD = "<strong unique password>"
-npm start
-```
-
-Production refuses to start if `JWT_SECRET` is missing, shorter than 32 characters, or still the development fallback, or if `ADMIN_ACCESS_PASSWORD` is missing or still `9989`.
-
-The Express server serves `frontend/dist` with immutable caching for hashed assets, no-cache for HTML, and SPA fallback for client routes. API responses are always `Cache-Control: no-store`.
-
-Before deploying:
-
-1. Set a unique `JWT_SECRET` of at least 32 characters. Production will not start without it.
-2. Set a unique `ADMIN_ACCESS_PASSWORD` and point `ADMIN_ACCESS_EMAIL` at the administrator account.
-3. Terminate TLS in front of the app so secure cookies are delivered over HTTPS.
-4. Persist the SQLite file (`DATABASE_PATH`) on durable storage, since it holds users, bookings, payments, refunds and the published website theme. Back it up.
-5. Configure PhonePe and/or Paytm merchant keys plus refund endpoints (see [Payments](#payments-card-phonepe-paytm)) and set `PUBLIC_BASE_URL`.
-6. There is no self-service password recovery. A forgotten password must be reset by an operator with database access, so keep `ADMIN_ACCESS_EMAIL` on a mailbox the owner controls and store passwords in a password manager.
-7. Uploaded site images are written to `backend/uploads/site/`; put that directory on durable storage too.
-8. Confirm the values in `backend/src/lib/business-facts.ts` (address, phone number, opening hours and deposit amount) still match the studio before launch.
 
 ### Where to host it
 
