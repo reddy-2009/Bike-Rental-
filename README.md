@@ -609,7 +609,7 @@ The Express server serves `frontend/dist` with immutable caching for hashed asse
 Before deploying:
 
 1. Set a unique `JWT_SECRET` of at least 32 characters. Production will not start without it.
-2. Set a unique `ADMIN_ACCESS_PASSWORD` (never the development default `9989`) and point `ADMIN_ACCESS_EMAIL` at the administrator account.
+2. Set a unique `ADMIN_ACCESS_PASSWORD` and point `ADMIN_ACCESS_EMAIL` at the administrator account.
 3. Terminate TLS in front of the app so secure cookies are delivered over HTTPS.
 4. Persist the SQLite file (`DATABASE_PATH`) on durable storage, since it holds users, bookings, payments, refunds and the published website theme. Back it up.
 5. Configure PhonePe and/or Paytm merchant keys plus refund endpoints (see [Payments](#payments-card-phonepe-paytm)) and set `PUBLIC_BASE_URL`.
